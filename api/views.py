@@ -1313,6 +1313,8 @@ class UploadVideoView(APIView):
             # Create lecture
             title = request.data.get('title', safe_name)
             section_id = request.data.get('sectionId') or request.data.get('section_id')
+            batch_id = request.data.get('batchId') or request.data.get('batch_id') or request.data.get('batch')
+            is_published = str(request.data.get('isPublished', 'true')).lower() != 'false'
             lecture = Lecture.objects.create(
                 title=title,
                 description=request.data.get('description', ''),
@@ -1321,10 +1323,12 @@ class UploadVideoView(APIView):
                 duration=request.data.get('duration', ''),
                 subject=request.data.get('subject', ''),
                 chapter=request.data.get('chapter', ''),
-                is_free=request.data.get('isFree', 'false').lower() == 'true',
+                is_free=str(request.data.get('isFree', 'false')).lower() == 'true',
+                is_published=is_published,
                 order=int(request.data.get('order', 0)),
                 course_id=course_id,
                 section_id=section_id if section_id else None,
+                batch_id=batch_id if batch_id else None,
             )
             # Update course lecture count
             Course.objects.filter(pk=course_id).update(

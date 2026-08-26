@@ -148,9 +148,11 @@ class Lecture(models.Model):
     thumbnail = models.URLField(blank=True)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lectures', null=True)
     section = models.ForeignKey(Section, on_delete=models.SET_NULL, null=True, blank=True, related_name='lectures')
+    batch = models.ForeignKey(Batch, on_delete=models.SET_NULL, null=True, blank=True, related_name='batch_lectures')
     subject = models.CharField(max_length=100, blank=True)
     chapter = models.CharField(max_length=100, blank=True)
     is_free = models.BooleanField(default=False)
+    is_published = models.BooleanField(default=True)
     order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 

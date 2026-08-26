@@ -867,17 +867,35 @@
         </div>
 
         <form id="form-upload-video" onsubmit="handleVideoUploadSubmit(event)">
+          <!-- Hierarchy Step 1 & 2: Course & Module (Section) -->
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Select Course *</label>
+              <label class="form-label">1. Select Course *</label>
               <select id="upload-course-select" class="form-control course-select" required onchange="onUploadCourseChange()">
                 <option value="">-- Loading Courses... --</option>
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Select Section (Optional)</label>
+              <label class="form-label">2. Select Module / Section *</label>
               <select id="upload-section-select" class="form-control">
-                <option value="">-- No Section --</option>
+                <option value="">-- Main / Default Section --</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Hierarchy Step 3: Batch Selector -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">3. Target Batch (Optional)</label>
+              <select id="upload-batch-select" class="form-control batch-select">
+                <option value="">-- All Batches (Enrolled in Course) --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">4. Publish Status</label>
+              <select id="upload-is-published" class="form-control">
+                <option value="true">🟢 Published (Live for students)</option>
+                <option value="false">🟡 Draft (Hidden from students)</option>
               </select>
             </div>
           </div>
@@ -909,22 +927,28 @@
               <button type="button" class="btn-header" style="background:#E2E8F0;color:#333;" onclick="document.getElementById('video-file-input').click()">Change</button>
             </div>
 
-            <!-- Upload Progress Bar -->
+            <!-- Upload Progress Bar & Retry Button -->
             <div id="upload-progress-box" style="display: none; margin-bottom: 20px;">
               <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700;">
                 <span id="upload-progress-text">Uploading: 0%</span>
+                <span id="upload-error-tag" style="display:none; color:#F44336;">⚠️ Upload Paused/Failed</span>
               </div>
               <div class="progress-container">
                 <div class="progress-fill" id="upload-progress-bar"></div>
               </div>
-              <small style="color:#FF6B35; font-weight:600;">Please keep this window open until upload completes 100%.</small>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <small style="color:#FF6B35; font-weight:600;">Please keep this window open until upload completes 100%.</small>
+                <button type="button" id="btn-upload-retry" class="btn-primary" style="display:none; background:#F44336; padding:6px 14px; font-size:12px;" onclick="handleVideoUploadSubmit(event)">
+                  🔁 Retry Upload
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- Lecture Details -->
+          <!-- Lecture Topic Details -->
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Lecture Title *</label>
+              <label class="form-label">Topic / Lecture Title *</label>
               <input type="text" id="upload-lecture-title" class="form-control" placeholder="e.g. Introduction to Python - Part 1" required>
             </div>
             <div class="form-group">
@@ -1496,6 +1520,8 @@
       e.preventDefault();
       const courseId = document.getElementById('upload-course-select')?.value;
       const sectionId = document.getElementById('upload-section-select')?.value;
+      const batchId = document.getElementById('upload-batch-select')?.value;
+      const isPublished = document.getElementById('upload-is-published')?.value !== 'false';
       const title = document.getElementById('upload-lecture-title')?.value?.trim();
       const subject = document.getElementById('upload-subject')?.value?.trim() || '';
       const chapter = document.getElementById('upload-chapter')?.value?.trim() || '';
@@ -1508,11 +1534,15 @@
       if (!title) { showToast('Please enter lecture title!', 'error'); return; }
 
       const submitBtn = document.getElementById('btn-upload-submit');
+      const retryBtn = document.getElementById('btn-upload-retry');
+      const errorTag = document.getElementById('upload-error-tag');
       const progressBox = document.getElementById('upload-progress-box');
       const progressBar = document.getElementById('upload-progress-bar');
       const progressText = document.getElementById('upload-progress-text');
 
       if (submitBtn) submitBtn.disabled = true;
+      if (retryBtn) retryBtn.style.display = 'none';
+      if (errorTag) errorTag.style.display = 'none';
 
       try {
         if (isYoutube) {
@@ -1520,9 +1550,10 @@
           const payload = {
             title, videoUrl: youtubeUrl,
             videoType: youtubeUrl.includes('youtube') || youtubeUrl.includes('youtu.be') ? 'youtube' : 'direct',
-            duration, subject, chapter, isFree, order: 1, course: courseId,
+            duration, subject, chapter, isFree, isPublished, order: 1, course: courseId,
           };
           if (sectionId) payload.section = sectionId;
+          if (batchId) payload.batch = batchId;
           await api.post(API_ENDPOINTS.LECTURES, payload);
           showToast(`✅ Lecture "${title}" added successfully!`, 'success');
         } else {
@@ -1534,8 +1565,10 @@
           formData.append('chapter', chapter);
           formData.append('duration', duration);
           formData.append('isFree', String(isFree));
+          formData.append('isPublished', String(isPublished));
           formData.append('order', '1');
           if (sectionId) formData.append('sectionId', sectionId);
+          if (batchId) formData.append('batchId', batchId);
 
           if (progressBox) progressBox.style.display = 'block';
           await api.post(API_ENDPOINTS.UPLOAD_VIDEO(courseId), formData, {
@@ -1558,7 +1591,9 @@
         loadCourseLectures(courseId);
         fetchStats();
       } catch (err) {
-        showToast('❌ Upload failed. Please check network/file.', 'error');
+        showToast('❌ Upload failed. Click Retry to try again.', 'error');
+        if (retryBtn) retryBtn.style.display = 'inline-flex';
+        if (errorTag) errorTag.style.display = 'inline';
       } finally {
         if (submitBtn) submitBtn.disabled = false;
       }
@@ -1604,13 +1639,33 @@
         const res = await api.get(API_ENDPOINTS.LECTURES_COURSE(courseId));
         const lecs = Array.isArray(res.data) ? res.data : [];
         if (lecs.length === 0) { listEl.innerHTML = '<p style="color:#888;">No lectures in this course yet.</p>'; return; }
-        let html = '<div class="table-responsive"><table class="custom-table"><thead><tr><th>#</th><th>Title</th><th>Subject</th><th>Duration</th><th>Type</th><th>Actions</th></tr></thead><tbody>';
+        let html = '<div class="table-responsive"><table class="custom-table"><thead><tr><th>#</th><th>Title</th><th>Subject</th><th>Duration</th><th>Status</th><th>Type</th><th>Actions</th></tr></thead><tbody>';
         lecs.forEach((l, i) => {
-          html += `<tr><td>${i+1}</td><td><strong>${l.title}</strong></td><td>${l.subject||'-'}</td><td>${l.duration||'-'}</td><td><span class="badge badge-primary">${l.videoType||'Uploaded'}</span></td><td><button onclick="deleteLecture('${l._id||l.id}', '${courseId}')" style="color:red;border:none;background:none;cursor:pointer;font-weight:bold;">🗑️ Delete</button></td></tr>`;
+          const isPub = l.isPublished !== false;
+          html += `<tr>
+            <td>${i+1}</td>
+            <td><strong>${l.title}</strong></td>
+            <td>${l.subject||'-'}</td>
+            <td>${l.duration||'-'}</td>
+            <td><span class="badge ${isPub ? 'badge-success' : 'badge-primary'}">${isPub ? '🟢 Published' : '🟡 Draft'}</span></td>
+            <td><span class="badge badge-blue">${l.videoType||'Uploaded'}</span></td>
+            <td>
+              <button onclick="toggleLecturePublish('${l._id||l.id}', ${!isPub}, '${courseId}')" style="color:#2196F3;border:none;background:none;cursor:pointer;font-weight:bold;margin-right:8px;">${isPub ? 'Hide' : 'Publish'}</button>
+              <button onclick="deleteLecture('${l._id||l.id}', '${courseId}')" style="color:red;border:none;background:none;cursor:pointer;font-weight:bold;">🗑️ Delete</button>
+            </td>
+          </tr>`;
         });
         html += '</tbody></table></div>';
         listEl.innerHTML = html;
       } catch { listEl.innerHTML = '<p>Could not load lectures.</p>'; }
+    }
+
+    async function toggleLecturePublish(lecId, newStatus, courseId) {
+      try {
+        await api.put(`${API_ENDPOINTS.LECTURES}${lecId}/`, { is_published: newStatus });
+        showToast(newStatus ? 'Lecture published!' : 'Lecture saved as draft.', 'info');
+        loadCourseLectures(courseId);
+      } catch { showToast('Error updating status.', 'error'); }
     }
 
     async function deleteLecture(lecId, courseId) {

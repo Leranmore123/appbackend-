@@ -185,21 +185,27 @@ class BatchSerializer(serializers.ModelSerializer):
 class LectureSerializer(serializers.ModelSerializer):
     _id = serializers.SerializerMethodField()
     isFree = serializers.BooleanField(source='is_free', required=False)
+    isPublished = serializers.BooleanField(source='is_published', required=False)
     videoUrl = serializers.CharField(source='video_url')
     videoType = serializers.CharField(source='video_type', required=False)
     sectionId = serializers.SerializerMethodField()
+    batchId = serializers.SerializerMethodField()
 
     class Meta:
         model = Lecture
         fields = ['_id', 'title', 'description', 'videoUrl', 'videoType',
-                  'duration', 'thumbnail', 'course', 'section', 'sectionId', 'subject', 'chapter',
-                  'isFree', 'order', 'created_at']
+                  'duration', 'thumbnail', 'course', 'section', 'sectionId',
+                  'batch', 'batchId', 'subject', 'chapter',
+                  'isFree', 'isPublished', 'order', 'created_at']
 
     def get__id(self, obj):
         return str(obj.id)
 
     def get_sectionId(self, obj):
         return str(obj.section_id) if obj.section_id else None
+
+    def get_batchId(self, obj):
+        return str(obj.batch_id) if obj.batch_id else None
 
 
 # ── Note ──────────────────────────────────────────────────────────────────────
