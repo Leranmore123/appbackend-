@@ -1551,14 +1551,23 @@
       const courseId = document.getElementById('upload-course-select')?.value;
       const sectionSel = document.getElementById('upload-section-select');
       if (!courseId) return;
-      if (sectionSel) sectionSel.innerHTML = '<option value="">-- No Section --</option>';
       try {
         const res = await api.get(API_ENDPOINTS.SECTIONS(courseId));
-        (Array.isArray(res.data) ? res.data : []).forEach((s) => {
-          const opt = document.createElement('option');
-          opt.value = s._id || s.id; opt.textContent = `📁 ${s.title}`;
-          sectionSel?.appendChild(opt);
-        });
+        const sections = Array.isArray(res.data) ? res.data : [];
+        if (sectionSel) {
+          if (sections.length > 0) {
+            sectionSel.innerHTML = '';
+            sections.forEach((s) => {
+              const opt = document.createElement('option');
+              opt.value = s._id || s.id;
+              opt.textContent = `📁 ${s.title}`;
+              sectionSel.appendChild(opt);
+            });
+            sectionSel.value = sections[0]._id || sections[0].id;
+          } else {
+            sectionSel.innerHTML = '<option value="">📁 Main / Default Section</option>';
+          }
+        }
       } catch {}
       loadCourseLectures(courseId);
     }

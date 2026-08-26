@@ -943,7 +943,20 @@ class SectionListView(APIView):
         return [IsAdmin()]
 
     def get(self, request, course_id):
-        qs = Section.objects.filter(course__id=course_id).prefetch_related('lectures')
+        try:
+            course = Course.objects.get(pk=course_id)
+        except Course.DoesNotExist:
+            return Response({'message': 'Course not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Auto-assign any unsectioned lectures so they always display in mobile app
+        unassigned = Lecture.objects.filter(course=course, section__isnull=True)
+        if unassigned.exists():
+            default_sec = Section.objects.filter(course=course).first()
+            if not default_sec:
+                default_sec = Section.objects.create(course=course, title='Course Lectures', order=0)
+            unassigned.update(section=default_sec)
+
+        qs = Section.objects.filter(course=course).prefetch_related('lectures').order_by('order', 'id')
         return Response(SectionSerializer(qs, many=True).data)
 
     def post(self, request, course_id):
