@@ -997,8 +997,18 @@
                 <input type="number" id="new-course-price" class="form-control" placeholder="0" value="0">
               </div>
               <div class="form-group">
-                <label class="form-label">Thumbnail URL</label>
-                <input type="url" id="new-course-thumb" class="form-control" placeholder="https://via.placeholder.com/400x200">
+                <label class="form-label">Course Thumbnail (Upload File from Laptop or URL)</label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                  <input type="file" id="new-course-thumb-file" accept="image/*" style="display:none;" onchange="uploadThumbnailFile(this, 'new-course-thumb', 'new-course-thumb-preview')">
+                  <button type="button" class="btn-header" style="background:#1A1A2E;color:white;padding:10px 14px;font-size:13px;white-space:nowrap;" onclick="document.getElementById('new-course-thumb-file').click()">
+                    📁 Browse Image
+                  </button>
+                  <input type="url" id="new-course-thumb" class="form-control" placeholder="Or paste image URL" value="https://via.placeholder.com/400x200" style="flex:1;">
+                </div>
+                <div id="new-course-thumb-preview" style="display:none; margin-top:8px; align-items:center; gap:10px;">
+                  <img id="new-course-thumb-img" src="" style="width:60px; height:40px; border-radius:6px; object-fit:cover; border:1px solid #ddd;">
+                  <span style="font-size:12px; color:#4CAF50; font-weight:700;">✅ Image Ready</span>
+                </div>
               </div>
             </div>
             <div class="form-group">
@@ -1048,6 +1058,21 @@
                 <label class="form-label">Price (₹)</label>
                 <input type="number" id="new-batch-price" class="form-control" placeholder="0" value="0">
               </div>
+              <div class="form-group">
+                <label class="form-label">Batch Thumbnail (Upload Image File or URL)</label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                  <input type="file" id="new-batch-thumb-file" accept="image/*" style="display:none;" onchange="uploadThumbnailFile(this, 'new-batch-thumb', 'new-batch-thumb-preview')">
+                  <button type="button" class="btn-header" style="background:#1A1A2E;color:white;padding:10px 14px;font-size:13px;white-space:nowrap;" onclick="document.getElementById('new-batch-thumb-file').click()">
+                    📁 Browse Image
+                  </button>
+                  <input type="url" id="new-batch-thumb" class="form-control" placeholder="Or paste image URL" value="https://via.placeholder.com/400x200" style="flex:1;">
+                </div>
+                <div id="new-batch-thumb-preview" style="display:none; margin-top:8px; align-items:center; gap:10px;">
+                  <img id="new-batch-thumb-img" src="" style="width:60px; height:40px; border-radius:6px; object-fit:cover; border:1px solid #ddd;">
+                  <span style="font-size:12px; color:#4CAF50; font-weight:700;">✅ Image Ready</span>
+                </div>
+              </div>
+            </div>
               <div class="form-group">
                 <label class="form-label">Live Stream Link (Optional)</label>
                 <input type="url" id="new-batch-liveurl" class="form-control" placeholder="https://zoom.us/...">
@@ -1596,6 +1621,30 @@
           loadCourseLectures(courseId);
           fetchStats();
         } catch { showToast('Error deleting lecture.', 'error'); }
+      }
+    }
+
+    async function uploadThumbnailFile(inputEl, targetInputId, previewContainerId) {
+      const file = inputEl.files?.[0];
+      if (!file) return;
+      showToast('Uploading image file...', 'info');
+      const formData = new FormData();
+      formData.append('image', file);
+      try {
+        const res = await api.post('/api/upload/image/', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        const url = res.data.url;
+        document.getElementById(targetInputId).value = url;
+        const preview = document.getElementById(previewContainerId);
+        if (preview) {
+          const img = preview.querySelector('img');
+          if (img) img.src = url;
+          preview.style.display = 'flex';
+        }
+        showToast('✅ Thumbnail image uploaded successfully!', 'success');
+      } catch (err) {
+        showToast('❌ Failed to upload image.', 'error');
       }
     }
 

@@ -100,6 +100,7 @@ urlpatterns = [
     path('leaderboard/', views.LeaderboardView.as_view(), name='leaderboard'),
 
     # ── Upload ────────────────────────────────────────────────────────────────
+    path('upload/image/', views.UploadImageView.as_view(), name='upload-image'),
     path('upload/pdf/<int:course_id>/', views.UploadPDFView.as_view(), name='upload-pdf'),
     path('upload/video/<int:course_id>/', views.UploadVideoView.as_view(), name='upload-video'),
 

@@ -1027,6 +1027,32 @@ class ReviewListView(APIView):
 
 # ── Upload ────────────────────────────────────────────────────────────────────
 
+class UploadImageView(APIView):
+    permission_classes = [IsAdmin]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        file = request.FILES.get('image') or request.FILES.get('file')
+        if not file:
+            return Response({'message': 'No image file provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        upload_dir = os.path.join(settings.MEDIA_ROOT, 'thumbnails')
+        os.makedirs(upload_dir, exist_ok=True)
+
+        safe_name = f"{int(time.time())}_{file.name.replace(' ', '_')}"
+        file_path = os.path.join(upload_dir, safe_name)
+        with open(file_path, 'wb+') as dest:
+            for chunk in file.chunks():
+                dest.write(chunk)
+
+        file_url = f"{request.scheme}://{request.get_host()}{settings.MEDIA_URL}thumbnails/{safe_name}"
+        return Response({
+            'url': file_url,
+            'fileName': safe_name,
+            'message': 'Image uploaded successfully'
+        }, status=status.HTTP_201_CREATED)
+
+
 class UploadPDFView(APIView):
     permission_classes = [IsAdmin]
     parser_classes = [MultiPartParser, FormParser]
