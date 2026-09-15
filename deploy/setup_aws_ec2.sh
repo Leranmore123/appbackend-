@@ -5,6 +5,10 @@ set -e
 APP_DIR=$(pwd)
 USER_NAME=$(whoami)
 
+echo "=== Fixing Directory Permissions for Nginx ==="
+sudo chmod 755 $(dirname "$APP_DIR") || true
+sudo chmod 755 "$APP_DIR" || true
+
 echo "=== Fixing dpkg if interrupted ==="
 sudo dpkg --configure -a --force-confold || true
 
