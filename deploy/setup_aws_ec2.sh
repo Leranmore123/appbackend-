@@ -56,8 +56,8 @@ sudo journalctl -u pwbackend -n 20 --no-pager || true
 echo "=== Configuring Nginx Proxy for pwbackend ==="
 cat <<EOF | sudo tee /etc/nginx/sites-available/pwbackend
 server {
-    listen 80 default_server;
-    server_name _;
+    listen 80;
+    server_name learnmoretechnologies.click www.learnmoretechnologies.click _;
 
     client_max_body_size 500M;
 
@@ -76,7 +76,10 @@ sudo ln -sf /etc/nginx/sites-available/pwbackend /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 
+echo "=== Setting up Free SSL Certificate for learnmoretechnologies.click ==="
+sudo certbot --nginx -d learnmoretechnologies.click -d www.learnmoretechnologies.click --non-interactive --agree-tos -m office.learnmore@gmail.com --redirect || true
+
 echo "=================================================="
 echo "🎉 DEPLOYMENT COMPLETED SUCCESSFULLY!"
-echo "Your Django Backend is live on EC2 (pwbackend.service)!"
+echo "Your Django Backend is live on https://learnmoretechnologies.click !"
 echo "=================================================="
