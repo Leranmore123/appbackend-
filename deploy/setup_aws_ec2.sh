@@ -39,7 +39,7 @@ After=network.target
 [Service]
 User=${USER_NAME}
 WorkingDirectory=${APP_DIR}
-ExecStart=${APP_DIR}/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/tmp/pwbackend.sock pwbackend.wsgi:application
+ExecStart=${APP_DIR}/venv/bin/gunicorn --access-logfile - --umask 000 --workers 3 --bind unix:/run/pwbackend.sock pwbackend.wsgi:application
 
 [Install]
 WantedBy=multi-user.target
@@ -63,7 +63,7 @@ server {
 
     location / {
         include proxy_params;
-        proxy_pass http://unix:/tmp/pwbackend.sock;
+        proxy_pass http://unix:/run/pwbackend.sock;
     }
 }
 EOF
