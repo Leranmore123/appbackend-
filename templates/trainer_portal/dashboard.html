@@ -1019,7 +1019,9 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Category *</label>
-                <input type="text" id="new-course-category" class="form-control" placeholder="e.g. App Development" required>
+                <select id="new-course-category" class="form-control" required>
+                  <option value="">-- Select Category --</option>
+                </select>
               </div>
             </div>
             <div class="form-row">
@@ -1081,7 +1083,9 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Category *</label>
-                <input type="text" id="new-batch-category" class="form-control" placeholder="e.g. JEE / Python" required>
+                <select id="new-batch-category" class="form-control" required>
+                  <option value="">-- Select Category --</option>
+                </select>
               </div>
             </div>
             <div class="form-row">
@@ -1503,6 +1507,29 @@
     async function initDashboard() {
       await fetchStats();
       await loadCoursesDropdowns();
+      await loadCategoryDropdowns();
+    }
+
+    async function loadCategoryDropdowns() {
+      try {
+        const res = await api.get(API_ENDPOINTS.CATEGORIES);
+        const cats = Array.isArray(res.data) ? res.data : [];
+        const courseCatSel = document.getElementById('new-course-category');
+        const batchCatSel = document.getElementById('new-batch-category');
+
+        [courseCatSel, batchCatSel].forEach(sel => {
+          if (!sel) return;
+          sel.innerHTML = '<option value="">-- Select Category --</option>';
+          cats.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.name;
+            opt.textContent = `${c.icon || '🏷️'} ${c.name}`;
+            sel.appendChild(opt);
+          });
+        });
+      } catch (err) {
+        console.log('Category dropdown load error:', err);
+      }
     }
 
     async function fetchStats() {
@@ -1544,9 +1571,9 @@
     function openModal(id) {
       document.getElementById(id)?.classList.add('active');
       if (id === 'modal-upload-video') loadUploadVideoModule();
-      if (id === 'modal-manage-courses') loadCoursesTable();
+      if (id === 'modal-manage-courses') { loadCoursesTable(); loadCategoryDropdowns(); }
       if (id === 'modal-manage-students') loadStudentsTable();
-      if (id === 'modal-manage-batches') loadBatchesTable();
+      if (id === 'modal-manage-batches') { loadBatchesTable(); loadCategoryDropdowns(); }
       if (id === 'modal-payments') loadPaymentsTable();
       if (id === 'modal-doubts') loadDoubtsList();
       if (id === 'modal-schedule') loadScheduleTable();
@@ -2048,6 +2075,7 @@
         document.getElementById('form-create-category')?.reset();
         document.getElementById('create-cat-box').style.display = 'none';
         loadCategoriesTable();
+        loadCategoryDropdowns();
       } catch (err) {
         showToast('❌ Error creating category.', 'error');
       }
@@ -2059,6 +2087,7 @@
           await api.delete(`${API_ENDPOINTS.CATEGORIES}${id}/`);
           showToast('Category deleted.', 'info');
           loadCategoriesTable();
+          loadCategoryDropdowns();
         } catch {
           showToast('Error deleting category.', 'error');
         }
