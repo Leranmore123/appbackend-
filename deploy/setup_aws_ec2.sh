@@ -39,12 +39,13 @@ After=network.target
 [Service]
 User=${USER_NAME}
 WorkingDirectory=${APP_DIR}
-ExecStart=${APP_DIR}/venv/bin/gunicorn --access-logfile - --workers 3 --bind 127.0.0.1:8000 pwbackend.wsgi:application
+ExecStart=${APP_DIR}/venv/bin/gunicorn --access-logfile - --workers 3 --bind 127.0.0.1:8001 pwbackend.wsgi:application
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
+sudo fuser -k 8001/tcp || true
 sudo systemctl daemon-reload
 sudo systemctl restart gunicorn
 sudo systemctl enable gunicorn
@@ -67,7 +68,7 @@ server {
 
     location / {
         include proxy_params;
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:8001;
     }
 }
 EOF
@@ -76,6 +77,9 @@ sudo ln -sf /etc/nginx/sites-available/pwbackend /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t
 sudo systemctl restart nginx
+
+echo "=== Nginx Error Logs ==="
+sudo tail -n 20 /var/log/nginx/error.log || true
 
 echo "=================================================="
 echo "🎉 DEPLOYMENT COMPLETED SUCCESSFULLY!"
