@@ -39,7 +39,7 @@ After=network.target
 [Service]
 User=${USER_NAME}
 WorkingDirectory=${APP_DIR}
-ExecStart=${APP_DIR}/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:${APP_DIR}/pwbackend.sock pwbackend.wsgi:application
+ExecStart=${APP_DIR}/venv/bin/gunicorn --access-logfile - --umask 000 --workers 3 --bind unix:${APP_DIR}/pwbackend.sock pwbackend.wsgi:application
 
 [Install]
 WantedBy=multi-user.target
