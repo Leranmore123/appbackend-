@@ -30,10 +30,10 @@ echo "=== Running Django Migrations & Collectstatic ==="
 python manage.py migrate
 python manage.py collectstatic --noinput
 
-echo "=== Configuring Gunicorn Systemd Service ==="
-cat <<EOF | sudo tee /etc/systemd/system/gunicorn.service
+echo "=== Configuring pwbackend Systemd Service ==="
+cat <<EOF | sudo tee /etc/systemd/system/pwbackend.service
 [Unit]
-Description=gunicorn daemon for Django Backend
+Description=Gunicorn daemon for PW Django Backend
 After=network.target
 
 [Service]
@@ -45,16 +45,15 @@ ExecStart=${APP_DIR}/venv/bin/gunicorn --access-logfile - --workers 3 --bind 127
 WantedBy=multi-user.target
 EOF
 
-sudo fuser -k 8001/tcp || true
 sudo systemctl daemon-reload
-sudo systemctl restart gunicorn
-sudo systemctl enable gunicorn
+sudo systemctl restart pwbackend
+sudo systemctl enable pwbackend
 
-echo "=== Gunicorn Status & Logs ==="
-sudo systemctl status gunicorn --no-pager || true
-sudo journalctl -u gunicorn -n 20 --no-pager || true
+echo "=== pwbackend Service Status & Logs ==="
+sudo systemctl status pwbackend --no-pager || true
+sudo journalctl -u pwbackend -n 20 --no-pager || true
 
-echo "=== Configuring Nginx Proxy ==="
+echo "=== Configuring Nginx Proxy for pwbackend ==="
 cat <<EOF | sudo tee /etc/nginx/sites-available/pwbackend
 server {
     listen 80;
@@ -73,15 +72,11 @@ server {
 }
 EOF
 
-sudo rm -rf /etc/nginx/sites-enabled/*
 sudo ln -sf /etc/nginx/sites-available/pwbackend /etc/nginx/sites-enabled/
 sudo nginx -t
-sudo systemctl restart nginx
-
-echo "=== Nginx Error Logs ==="
-sudo tail -n 20 /var/log/nginx/error.log || true
+sudo systemctl reload nginx
 
 echo "=================================================="
 echo "🎉 DEPLOYMENT COMPLETED SUCCESSFULLY!"
-echo "Your Django Backend is live on EC2!"
+echo "Your Django Backend is live on EC2 (pwbackend.service)!"
 echo "=================================================="
