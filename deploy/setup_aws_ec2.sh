@@ -73,8 +73,8 @@ server {
 }
 EOF
 
+sudo rm -rf /etc/nginx/sites-enabled/*
 sudo ln -sf /etc/nginx/sites-available/pwbackend /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t
 sudo systemctl restart nginx
 
