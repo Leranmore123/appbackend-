@@ -56,7 +56,7 @@ sudo journalctl -u pwbackend -n 20 --no-pager || true
 echo "=== Configuring Nginx Proxy for pwbackend ==="
 cat <<EOF | sudo tee /etc/nginx/sites-available/pwbackend
 server {
-    listen 80;
+    listen 80 default_server;
     server_name _;
 
     client_max_body_size 500M;
