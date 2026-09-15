@@ -8,17 +8,17 @@ USER_NAME=$(whoami)
 echo "=== Fixing dpkg if interrupted ==="
 sudo dpkg --configure -a --force-confold || true
 
-echo "=== Updating System Packages ==="
-sudo apt update && sudo apt upgrade -y
+echo "=== Updating Package List ==="
+sudo apt update -y
 
-echo "=== Installing Python, Pip, Nginx, Certbot ==="
-sudo apt install -y python3-pip python3-venv nginx certbot python3-certbot-nginx git
+echo "=== Installing Required Dependencies ==="
+DEBIAN_FRONTEND=noninteractive sudo apt install -y python3-pip python3-venv nginx certbot python3-certbot-nginx git
 
 echo "=== Setting up Virtual Environment ==="
 python3 -m venv venv
 source venv/bin/activate
 
-echo "=== Installing Dependencies ==="
+echo "=== Installing Python Requirements ==="
 pip install --upgrade pip
 pip install -r requirements.txt
 
@@ -26,7 +26,7 @@ echo "=== Running Django Migrations & Collectstatic ==="
 python manage.py migrate
 python manage.py collectstatic --noinput
 
-echo "=== Configuring Dynamic Gunicorn Service ==="
+echo "=== Configuring Gunicorn Systemd Service ==="
 cat <<EOF | sudo tee /etc/systemd/system/gunicorn.service
 [Unit]
 Description=gunicorn daemon for Django Backend
@@ -42,10 +42,10 @@ WantedBy=multi-user.target
 EOF
 
 sudo systemctl daemon-reload
-sudo systemctl start gunicorn
+sudo systemctl restart gunicorn
 sudo systemctl enable gunicorn
 
-echo "=== Configuring Dynamic Nginx Site ==="
+echo "=== Configuring Nginx Proxy ==="
 cat <<EOF | sudo tee /etc/nginx/sites-available/pwbackend
 server {
     listen 80;
