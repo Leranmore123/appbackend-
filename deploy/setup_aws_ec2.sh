@@ -39,7 +39,7 @@ After=network.target
 [Service]
 User=${USER_NAME}
 WorkingDirectory=${APP_DIR}
-ExecStart=${APP_DIR}/venv/bin/gunicorn --access-logfile - --umask 000 --workers 3 --bind unix:/run/pwbackend.sock pwbackend.wsgi:application
+ExecStart=${APP_DIR}/venv/bin/gunicorn --access-logfile - --workers 3 --bind 127.0.0.1:8000 pwbackend.wsgi:application
 
 [Install]
 WantedBy=multi-user.target
@@ -48,6 +48,10 @@ EOF
 sudo systemctl daemon-reload
 sudo systemctl restart gunicorn
 sudo systemctl enable gunicorn
+
+echo "=== Gunicorn Status & Logs ==="
+sudo systemctl status gunicorn --no-pager || true
+sudo journalctl -u gunicorn -n 20 --no-pager || true
 
 echo "=== Configuring Nginx Proxy ==="
 cat <<EOF | sudo tee /etc/nginx/sites-available/pwbackend
@@ -63,7 +67,7 @@ server {
 
     location / {
         include proxy_params;
-        proxy_pass http://unix:/run/pwbackend.sock;
+        proxy_pass http://127.0.0.1:8000;
     }
 }
 EOF
