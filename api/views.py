@@ -24,6 +24,19 @@ from .serializers import (
 )
 from .permissions import IsAdmin
 
+def sync_user_batch_enrollments(user):
+    if not user or not user.is_authenticated:
+        return
+    user_email = (getattr(user, 'email', '') or '').strip().lower()
+    if not user_email:
+        return
+    all_batches = Batch.objects.filter(is_active=True).exclude(allowed_emails__isnull=True).exclude(allowed_emails='')
+    for b in all_batches:
+        allowed = b.get_allowed_email_list()
+        if user_email in allowed:
+            BatchEnrollment.objects.get_or_create(user=user, batch=b)
+
+
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -34,6 +47,7 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            sync_user_batch_enrollments(user)
             return Response(
                 UserSerializer(user, context={'include_token': True}).data,
                 status=status.HTTP_201_CREATED,
@@ -48,6 +62,7 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
+            sync_user_batch_enrollments(user)
             return Response(UserSerializer(user, context={'include_token': True}).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -343,14 +358,37 @@ class BatchListView(APIView):
         return [IsAdmin()]
 
     def get(self, request):
-        qs = Batch.objects.filter(is_active=True)
-        return Response(BatchSerializer(qs, many=True, context={'request': request}).data)
+        category = request.query_params.get('category')
+        
+        # If admin, return all active batches
+        if request.user.is_authenticated and getattr(request.user, 'role', '') == 'admin':
+            qs = Batch.objects.filter(is_active=True)
+            if category and category != 'All':
+                qs = qs.filter(category=category)
+            return Response(BatchSerializer(qs, many=True, context={'request': request}).data)
+
+        # For student: show ONLY batches where they are enrolled or their email is in allowed_emails
+        if request.user.is_authenticated:
+            sync_user_batch_enrollments(request.user)
+            enrolled_ids = BatchEnrollment.objects.filter(user=request.user).values_list('batch_id', flat=True)
+            user_email = (getattr(request.user, 'email', '') or '').strip().lower()
+
+            qs = Batch.objects.filter(is_active=True).filter(
+                models.Q(id__in=enrolled_ids) |
+                (models.Q(allowed_emails__icontains=user_email) if user_email else models.Q(pk__in=[]))
+            ).distinct()
+            if category and category != 'All':
+                qs = qs.filter(category=category)
+            return Response(BatchSerializer(qs, many=True, context={'request': request}).data)
+
+        # Unauthenticated users: do not expose batch list
+        return Response([])
 
     def post(self, request):
         serializer = BatchSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            batch = serializer.save()
+            return Response(BatchSerializer(batch, context={'request': request}).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -378,8 +416,8 @@ class BatchDetailView(APIView):
             return Response({'message': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
         serializer = BatchSerializer(obj, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+            batch = serializer.save()
+            return Response(BatchSerializer(batch, context={'request': request}).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
@@ -412,11 +450,111 @@ class MyBatchesView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        sync_user_batch_enrollments(request.user)
         enrolled_batch_ids = BatchEnrollment.objects.filter(
             user=request.user
         ).values_list('batch_id', flat=True)
-        batches = Batch.objects.filter(id__in=enrolled_batch_ids, is_active=True)
+        user_email = (getattr(request.user, 'email', '') or '').strip().lower()
+
+        batches = Batch.objects.filter(is_active=True).filter(
+            models.Q(id__in=enrolled_batch_ids) |
+            (models.Q(allowed_emails__icontains=user_email) if user_email else models.Q(pk__in=[]))
+        ).distinct()
         return Response(BatchSerializer(batches, many=True, context={'request': request}).data)
+
+
+class BatchSectionListView(APIView):
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [IsAuthenticated()]
+        return [IsAdmin()]
+
+    def get(self, request, batch_id):
+        try:
+            batch = Batch.objects.get(pk=batch_id)
+        except Batch.DoesNotExist:
+            return Response({'message': 'Batch not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Auto-assign any unsectioned batch lectures
+        unassigned = Lecture.objects.filter(batch=batch, section__isnull=True)
+        if unassigned.exists():
+            default_sec = Section.objects.filter(batch=batch).first()
+            if not default_sec:
+                default_sec = Section.objects.create(batch=batch, title='Batch Lectures', order=0)
+            unassigned.update(section=default_sec)
+
+        qs = Section.objects.filter(batch=batch).prefetch_related('lectures').order_by('order', 'id')
+        return Response(SectionSerializer(qs, many=True).data)
+
+    def post(self, request, batch_id):
+        try:
+            batch = Batch.objects.get(pk=batch_id)
+        except Batch.DoesNotExist:
+            return Response({'message': 'Batch not found'}, status=status.HTTP_404_NOT_FOUND)
+        section = Section.objects.create(
+            batch=batch,
+            title=request.data.get('title', 'New Section'),
+            order=int(request.data.get('order', 0)),
+        )
+        return Response(SectionSerializer(section).data, status=status.HTTP_201_CREATED)
+
+
+class LectureByBatchView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, batch_id):
+        qs = Lecture.objects.filter(batch__id=batch_id).order_by('order', 'id')
+        return Response(LectureSerializer(qs, many=True).data)
+
+
+class BatchStudentManageView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request, pk):
+        try:
+            batch = Batch.objects.get(pk=pk)
+        except Batch.DoesNotExist:
+            return Response({'message': 'Batch not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        allowed_list = batch.get_allowed_email_list()
+        enrollments = BatchEnrollment.objects.filter(batch=batch).select_related('user')
+        enrolled_users = [
+            {'id': e.user.id, 'name': e.user.name or e.user.email, 'email': e.user.email, 'enrolled_at': e.enrolled_at}
+            for e in enrollments
+        ]
+        return Response({
+            'batchId': batch.id,
+            'batchName': batch.name,
+            'allowed_emails': batch.allowed_emails,
+            'allowedEmails': allowed_list,
+            'enrolledStudents': enrolled_users,
+            'totalStudents': len(allowed_list)
+        })
+
+    def post(self, request, pk):
+        try:
+            batch = Batch.objects.get(pk=pk)
+        except Batch.DoesNotExist:
+            return Response({'message': 'Batch not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        new_emails = request.data.get('allowed_emails', '')
+        batch.allowed_emails = new_emails
+        batch.save(update_fields=['allowed_emails'])
+
+        allowed_list = batch.get_allowed_email_list()
+        for email in allowed_list:
+            users = User.objects.filter(email__iexact=email)
+            for u in users:
+                BatchEnrollment.objects.get_or_create(user=u, batch=batch)
+        batch.total_students = len(allowed_list)
+        batch.save(update_fields=['total_students'])
+
+        return Response({
+            'message': 'Student emails updated successfully',
+            'allowed_emails': batch.allowed_emails,
+            'allowedEmails': allowed_list,
+            'totalStudents': batch.total_students
+        })
 
 
 # ── Lectures ──────────────────────────────────────────────────────────────────
@@ -481,13 +619,15 @@ class LectureCreateView(APIView):
 
     def post(self, request):
         data = request.data.copy()
-        # Handle sectionId → section field mapping from frontend
         if 'sectionId' in data and data['sectionId']:
             data['section'] = data['sectionId']
+        if 'batchId' in data and data['batchId']:
+            data['batch'] = data['batchId']
+        if 'courseId' in data and data['courseId']:
+            data['course'] = data['courseId']
         serializer = LectureSerializer(data=data)
         if serializer.is_valid():
             lecture = serializer.save()
-            # Update course total_lectures count
             if lecture.course:
                 Course.objects.filter(pk=lecture.course.pk).update(
                     total_lectures=models.F('total_lectures') + 1
@@ -1298,7 +1438,8 @@ class UploadVideoView(APIView):
 
         # If a file is provided, save to local disk
         if file:
-            upload_dir = os.path.join(settings.MEDIA_ROOT, 'videos', str(course_id))
+            c_id_folder = str(course_id) if course_id and int(course_id) > 0 else 'batches'
+            upload_dir = os.path.join(settings.MEDIA_ROOT, 'videos', c_id_folder)
             os.makedirs(upload_dir, exist_ok=True)
 
             # Sanitize filename
@@ -1308,13 +1449,16 @@ class UploadVideoView(APIView):
                 for chunk in file.chunks():
                     dest.write(chunk)
 
-            video_url = f"{request.scheme}://{request.get_host()}{settings.MEDIA_URL}videos/{course_id}/{safe_name}"
+            video_url = f"{request.scheme}://{request.get_host()}{settings.MEDIA_URL}videos/{c_id_folder}/{safe_name}"
 
             # Create lecture
             title = request.data.get('title', safe_name)
             section_id = request.data.get('sectionId') or request.data.get('section_id')
             batch_id = request.data.get('batchId') or request.data.get('batch_id') or request.data.get('batch')
             is_published = str(request.data.get('isPublished', 'true')).lower() != 'false'
+            
+            actual_course_id = course_id if course_id and int(course_id) > 0 else None
+
             lecture = Lecture.objects.create(
                 title=title,
                 description=request.data.get('description', ''),
@@ -1326,14 +1470,14 @@ class UploadVideoView(APIView):
                 is_free=str(request.data.get('isFree', 'false')).lower() == 'true',
                 is_published=is_published,
                 order=int(request.data.get('order', 0)),
-                course_id=course_id,
-                section_id=section_id if section_id else None,
-                batch_id=batch_id if batch_id else None,
+                course_id=actual_course_id,
+                section_id=int(section_id) if section_id else None,
+                batch_id=int(batch_id) if batch_id else None,
             )
-            # Update course lecture count
-            Course.objects.filter(pk=course_id).update(
-                total_lectures=models.F('total_lectures') + 1
-            )
+            if actual_course_id:
+                Course.objects.filter(pk=actual_course_id).update(
+                    total_lectures=models.F('total_lectures') + 1
+                )
             from .serializers import LectureSerializer
             return Response({
                 'message': 'Video uploaded successfully!',

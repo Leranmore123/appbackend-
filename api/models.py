@@ -21,12 +21,12 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    ROLE_CHOICES = [('student', 'Student'), ('admin', 'Admin')]
+    ROLE_CHOICES = [('student', 'Student'), ('admin', 'Admin'), ('trainer', 'Trainer'), ('faculty', 'Faculty')]
     name = models.CharField(max_length=200)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, unique=True)
     avatar = models.URLField(default='https://ui-avatars.com/api/?name=User&background=FF6B35&color=fff')
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='student')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student')
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -57,10 +57,18 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+    def get_allowed_email_list(self):
+        if not self.allowed_emails:
+            return []
+        import re
+        emails = [e.strip().lower() for e in re.split(r'[\s,;]+', self.allowed_emails) if e.strip()]
+        return list(dict.fromkeys(emails))
+
 
 # ── Section ───────────────────────────────────────────────────────────────────
 class Section(models.Model):
-    course = models.ForeignKey('Course', on_delete=models.CASCADE, related_name='sections')
+    course = models.ForeignKey('Course', on_delete=models.CASCADE, related_name='sections', null=True, blank=True)
+    batch = models.ForeignKey('Batch', on_delete=models.CASCADE, related_name='sections', null=True, blank=True)
     title = models.CharField(max_length=300)
     order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -84,6 +92,7 @@ class Course(models.Model):
     instructor_bio = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_free = models.BooleanField(default=False)
+    allowed_emails = models.TextField(blank=True, default='', help_text='Comma-separated student email IDs allowed in this batch')
     rating = models.FloatField(default=4.5)
     total_students = models.IntegerField(default=0)
     total_lectures = models.IntegerField(default=0)
@@ -113,6 +122,7 @@ class Batch(models.Model):
     category = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_free = models.BooleanField(default=False)
+    allowed_emails = models.TextField(blank=True, default='', help_text='Comma-separated student email IDs allowed in this batch')
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     instructor_name = models.CharField(max_length=200, blank=True)
@@ -126,6 +136,13 @@ class Batch(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_allowed_email_list(self):
+        if not self.allowed_emails:
+            return []
+        import re
+        emails = [e.strip().lower() for e in re.split(r'[\s,;]+', self.allowed_emails) if e.strip()]
+        return list(dict.fromkeys(emails))
 
 
 class BatchEnrollment(models.Model):
@@ -152,6 +169,7 @@ class Lecture(models.Model):
     subject = models.CharField(max_length=100, blank=True)
     chapter = models.CharField(max_length=100, blank=True)
     is_free = models.BooleanField(default=False)
+    allowed_emails = models.TextField(blank=True, default='', help_text='Comma-separated student email IDs allowed in this batch')
     is_published = models.BooleanField(default=True)
     order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -172,6 +190,7 @@ class Note(models.Model):
     chapter = models.CharField(max_length=100, blank=True)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='notes', null=True)
     is_free = models.BooleanField(default=False)
+    allowed_emails = models.TextField(blank=True, default='', help_text='Comma-separated student email IDs allowed in this batch')
     download_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 

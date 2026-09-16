@@ -30,11 +30,16 @@ urlpatterns = [
     path('courses/<int:course_id>/reviews/', views.ReviewListView.as_view(), name='review-list'),
     path('sections/<int:pk>/', views.SectionDetailView.as_view(), name='section-detail'),
 
-    # ── Batches ───────────────────────────────────────────────────────────────
+        # ── Batches ───────────────────────────────────────────────────────────────────
     path('batches/', views.BatchListView.as_view(), name='batch-list'),
     path('batches/my/', views.MyBatchesView.as_view(), name='my-batches'),
     path('batches/<int:pk>/', views.BatchDetailView.as_view(), name='batch-detail'),
     path('batches/<int:pk>/enroll/', views.BatchEnrollView.as_view(), name='batch-enroll'),
+    path('batches/<int:batch_id>/sections/', views.BatchSectionListView.as_view(), name='batch-sections'),
+    path('batches/<int:batch_id>/lectures/', views.LectureByBatchView.as_view(), name='batch-lectures'),
+    path('batches/<int:pk>/students/', views.BatchStudentManageView.as_view(), name='batch-students'),
+
+
 
     # ── Lectures ──────────────────────────────────────────────────────────────
     path('lectures/course/<int:course_id>/', views.LectureByCourseView.as_view(), name='lectures-by-course'),

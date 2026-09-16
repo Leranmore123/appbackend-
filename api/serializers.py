@@ -13,13 +13,20 @@ from .models import (
 # ── Auth ──────────────────────────────────────────────────────────────────────
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
+    role = serializers.CharField(required=False, default='student')
 
     class Meta:
         model = User
-        fields = ['name', 'email', 'phone', 'password']
+        fields = ['name', 'email', 'phone', 'password', 'role']
 
     def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
+        role = validated_data.pop('role', 'student')
+        user = User.objects.create_user(**validated_data)
+        if role in ('admin', 'trainer'):
+            user.role = 'admin'
+            user.is_staff = True
+            user.save(update_fields=['role', 'is_staff'])
+        return user
 
 
 class LoginSerializer(serializers.Serializer):
@@ -140,11 +147,16 @@ class BatchSerializer(serializers.ModelSerializer):
     isActive = serializers.BooleanField(source='is_active', required=False)
     isLive = serializers.BooleanField(source='is_live', required=False)
     totalStudents = serializers.IntegerField(source='total_students', read_only=True)
+    allowed_emails = serializers.CharField(required=False, allow_blank=True)
+    allowedEmails = serializers.SerializerMethodField()
+    sections = serializers.SerializerMethodField()
+    isEnrolled = serializers.SerializerMethodField()
 
     class Meta:
         model = Batch
         fields = ['_id', 'name', 'description', 'thumbnail', 'category',
-                  'price', 'isFree', 'start_date', 'end_date', 'instructor',
+                  'price', 'isFree', 'allowed_emails', 'allowedEmails', 'sections', 'isEnrolled',
+                  'start_date', 'end_date', 'instructor',
                   'totalStudents', 'isLive', 'live_stream_url', 'isActive', 'created_at']
 
     def get__id(self, obj):
@@ -153,11 +165,55 @@ class BatchSerializer(serializers.ModelSerializer):
     def get_instructor(self, obj):
         return {'name': obj.instructor_name, 'avatar': obj.instructor_avatar}
 
+    def get_allowedEmails(self, obj):
+        if hasattr(obj, 'get_allowed_email_list'):
+            return obj.get_allowed_email_list()
+        if not obj.allowed_emails:
+            return []
+        import re
+        return [e.strip().lower() for e in re.split(r'[\s,;]+', obj.allowed_emails) if e.strip()]
+
+    def get_sections(self, obj):
+        # Return sections with their lectures
+        qs = obj.sections.all().prefetch_related('lectures').order_by('order', 'id')
+        return SectionSerializer(qs, many=True).data
+
+    def get_isEnrolled(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user or not request.user.is_authenticated:
+            return False
+        if getattr(request.user, 'role', '') == 'admin':
+            return True
+        user_email = (getattr(request.user, 'email', '') or '').strip().lower()
+        username = (getattr(request.user, 'username', '') or '').strip().lower()
+        allowed = self.get_allowedEmails(obj)
+        if user_email in allowed or username in allowed:
+            return True
+        return obj.enrollments.filter(user=request.user).exists()
+
+    def sync_enrollments(self, batch):
+        if hasattr(batch, 'get_allowed_email_list'):
+            allowed_list = batch.get_allowed_email_list()
+        else:
+            raw = getattr(batch, 'allowed_emails', '') or ''
+            import re
+            allowed_list = [e.strip().lower() for e in re.split(r'[\s,;]+', raw) if e.strip()]
+        from .models import User, BatchEnrollment
+        for email in allowed_list:
+            users = User.objects.filter(email__iexact=email)
+            for u in users:
+                BatchEnrollment.objects.get_or_create(user=u, batch=batch)
+        if allowed_list:
+            batch.total_students = len(allowed_list)
+            batch.save(update_fields=['total_students'])
+
     def create(self, validated_data):
         instructor = self.initial_data.get('instructor', {})
         validated_data['instructor_name'] = instructor.get('name', '') if isinstance(instructor, dict) else ''
         validated_data['instructor_avatar'] = instructor.get('avatar', '') if isinstance(instructor, dict) else ''
-        return Batch.objects.create(**validated_data)
+        batch = Batch.objects.create(**validated_data)
+        self.sync_enrollments(batch)
+        return batch
 
     def update(self, instance, validated_data):
         instructor = self.initial_data.get('instructor', {})
@@ -167,6 +223,7 @@ class BatchSerializer(serializers.ModelSerializer):
         for attr, val in validated_data.items():
             setattr(instance, attr, val)
         instance.save()
+        self.sync_enrollments(instance)
         return instance
 
     def to_representation(self, instance):
@@ -516,16 +573,24 @@ class QuizSerializer(serializers.ModelSerializer):
 class SectionSerializer(serializers.ModelSerializer):
     _id = serializers.SerializerMethodField()
     lectures = serializers.SerializerMethodField()
+    courseId = serializers.SerializerMethodField()
+    batchId = serializers.SerializerMethodField()
 
     class Meta:
         model = Section
-        fields = ['_id', 'title', 'order', 'lectures', 'created_at']
+        fields = ['_id', 'title', 'order', 'courseId', 'batchId', 'lectures', 'created_at']
 
     def get__id(self, obj):
         return str(obj.id)
 
+    def get_courseId(self, obj):
+        return str(obj.course_id) if obj.course_id else None
+
+    def get_batchId(self, obj):
+        return str(obj.batch_id) if obj.batch_id else None
+
     def get_lectures(self, obj):
-        qs = obj.lectures.all().order_by('order')
+        qs = obj.lectures.all().order_by('order', 'id')
         return LectureSerializer(qs, many=True).data
 
 
