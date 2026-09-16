@@ -1731,14 +1731,14 @@
       <div class="modal-body" style="padding: 32px 28px;">
         <p style="color: #6C757D; font-size: 14px; margin-bottom: 22px;">Sign in with your admin credentials to access upload and course management.</p>
         <div id="login-error-msg" style="display:none; color: #F44336; background: rgba(244, 67, 54, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; font-weight: 600;"></div>
-        <form onsubmit="event.preventDefault(); handleLogin(document.getElementById('login-email').value, document.getElementById('login-password').value);">
+        <form autocomplete="off" onsubmit="event.preventDefault(); handleLogin(document.getElementById('login-email').value, document.getElementById('login-password').value);">
           <div class="form-group" style="text-align: left;">
             <label class="form-label">Email Address</label>
-            <input type="email" id="login-email" class="form-control" placeholder="Enter your email" required autocomplete="username">
+            <input type="email" id="login-email" class="form-control" placeholder="Enter your email" required autocomplete="off" value="">
           </div>
           <div class="form-group" style="text-align: left; margin-bottom: 24px;">
             <label class="form-label">Password</label>
-            <input type="password" id="login-password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
+            <input type="password" id="login-password" class="form-control" placeholder="Enter your password" required autocomplete="new-password" value="">
           </div>
           <button type="submit" id="btn-login-submit" class="btn-primary" style="width: 100%; padding: 14px;">Sign In to Dashboard 🚀</button>
         </form>
@@ -1851,7 +1851,15 @@
       }
     }
 
-    function showLoginModal() { document.getElementById('login-modal')?.classList.add('active'); }
+    function showLoginModal() { 
+      const emailInput = document.getElementById('login-email');
+      const passInput = document.getElementById('login-password');
+      if (emailInput) emailInput.value = '';
+      if (passInput) passInput.value = '';
+      const err = document.getElementById('login-error-msg');
+      if (err) err.style.display = 'none';
+      document.getElementById('login-modal')?.classList.add('active'); 
+    }
     function hideLoginModal() { document.getElementById('login-modal')?.classList.remove('active'); }
 
     async function initDashboard() {
