@@ -2679,32 +2679,24 @@
       const studioTrainerSel = document.getElementById('studio-trainer-select') || document.getElementById('studio-trainer-filter');
       const trainersSet = new Set();
 
-      // Add logged in user
-      const loggedAdmin = JSON.parse(localStorage.getItem('lmt_django_admin_user') || '{}');
-      const loggedUser = JSON.parse(localStorage.getItem('user') || '{}');
-      if (loggedAdmin.name) trainersSet.add(loggedAdmin.name);
-      if (loggedUser.name) trainersSet.add(loggedUser.name);
-
-      // Fetch all users to extract admin, trainer & faculty names
+      // Fetch all registered users to extract real trainers & admins only
       try {
         const res = await api.get(API_ENDPOINTS.USER_ALL);
         const users = Array.isArray(res.data) ? res.data : [];
         users.forEach(u => {
-          if (u.role === 'admin' || u.role === 'trainer' || u.role === 'faculty' || u.is_staff) {
-            const name = u.name || u.email;
-            if (name && name.trim()) trainersSet.add(name.trim());
+          if (u.role === 'trainer' || u.role === 'faculty' || u.role === 'admin') {
+            const name = (u.name || u.email || '').trim();
+            if (name) trainersSet.add(name);
           }
         });
       } catch (e) {
         console.log('Error loading users for trainers dropdown:', e);
       }
 
-      // Add trainers from existing batches
-      if (allBatches && allBatches.length > 0) {
-        allBatches.forEach(b => {
-          const tName = (b.instructor && b.instructor.name) || b.instructor_name;
-          if (tName && tName.trim()) trainersSet.add(tName.trim());
-        });
+      // Fallback only if no trainer exists in database yet
+      if (trainersSet.size === 0) {
+        const loggedAdmin = JSON.parse(localStorage.getItem('lmt_django_admin_user') || '{}');
+        if (loggedAdmin.name) trainersSet.add(loggedAdmin.name.trim());
       }
 
       allTrainersList = Array.from(trainersSet);
