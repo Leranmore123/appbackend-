@@ -37,6 +37,69 @@ def sync_user_batch_enrollments(user):
             BatchEnrollment.objects.get_or_create(user=user, batch=b)
 
 
+def auto_populate_batch_sections(batch):
+    if not batch or not batch.category:
+        return
+    cat = (batch.category or '').strip()
+    
+    # 1. Check if course with this category has sections
+    course_sections = Section.objects.filter(course__category__iexact=cat).order_by('order', 'id')
+    if not course_sections.exists():
+        course_sections = Section.objects.filter(course__category__icontains=cat).order_by('order', 'id')
+
+    section_titles = []
+    if course_sections.exists():
+        for s in course_sections:
+            t = (s.title or '').strip()
+            if t and t not in section_titles:
+                section_titles.append(t)
+
+    if not section_titles:
+        CATEGORY_DEFAULTS = {
+            'python': [
+                'Introduction to Python', 'Python Basics & Setup', 'Operators & Expressions',
+                'Conditional Statements', 'Loops & Iterations', 'Functions & Lambdas',
+                'Data Structures (List, Tuple, Set, Dict)', 'String Handling',
+                'Object-Oriented Programming (OOP)', 'File Handling',
+                'Exception Handling', 'Modules & Packages', 'Working with APIs',
+                'Database with Python', 'Python Automation & Capstone Project'
+            ],
+            'java': [
+                'Introduction to Java', 'Java Syntax & Basics', 'Data Types & Operators',
+                'Control Flow Statements', 'Object-Oriented Programming (OOP)',
+                'Inheritance & Polymorphism', 'Abstraction & Interfaces', 'Exception Handling',
+                'Collections Framework', 'Multithreading & Concurrency', 'File I/O & Streams',
+                'Java Database Connectivity (JDBC)', 'Spring Boot & Microservices'
+            ],
+            'web development': [
+                'HTML5 Fundamentals', 'CSS3 & Modern Styling', 'Responsive Design & Flexbox',
+                'JavaScript Essentials', 'DOM Manipulation & Events', 'Async JS & Fetch API',
+                'React.js Basics', 'React Hooks & State Management', 'Node.js & Express.js Backend',
+                'MongoDB & Database Design', 'RESTful APIs & Authentication', 'Full Stack Deployment'
+            ],
+            'data science': [
+                'Introduction to Data Science', 'Python for Data Analysis', 'NumPy & Pandas',
+                'Data Visualization (Matplotlib & Seaborn)', 'Exploratory Data Analysis (EDA)',
+                'Statistics & Probability', 'Machine Learning Algorithms', 'Scikit-Learn & Model Building',
+                'Deep Learning Basics', 'Real-world Capstone Projects'
+            ]
+        }
+        for k, titles in CATEGORY_DEFAULTS.items():
+            if k in cat.lower() or cat.lower() in k:
+                section_titles = titles
+                break
+
+    if not section_titles:
+        section_titles = ['Module 1: Introduction', 'Module 2: Core Concepts', 'Module 3: Advanced Topics', 'Module 4: Project & Practice']
+
+    for idx, title in enumerate(section_titles):
+        Section.objects.get_or_create(
+            batch=batch,
+            title=title,
+            defaults={'order': idx + 1}
+        )
+
+
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -396,6 +459,7 @@ class BatchListView(APIView):
         serializer = BatchSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             batch = serializer.save()
+            auto_populate_batch_sections(batch)
             return Response(BatchSerializer(batch, context={'request': request}).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -482,6 +546,10 @@ class BatchSectionListView(APIView):
             batch = Batch.objects.get(pk=batch_id)
         except Batch.DoesNotExist:
             return Response({'message': 'Batch not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Auto populate sections if batch has no sections or only 1 dummy section
+        if Section.objects.filter(batch=batch).count() <= 1:
+            auto_populate_batch_sections(batch)
 
         # Auto-assign any unsectioned batch lectures
         unassigned = Lecture.objects.filter(batch=batch, section__isnull=True)
