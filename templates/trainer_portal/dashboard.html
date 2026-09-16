@@ -3043,9 +3043,10 @@
 
       let filtered = allBatches || [];
       if (selectedTrainer && selectedTrainer !== 'ALL') {
+        const st = selectedTrainer.trim().toLowerCase();
         filtered = filtered.filter(b => {
           const tName = ((b.instructor && b.instructor.name) || b.instructor_name || '').trim().toLowerCase();
-          return tName === selectedTrainer.trim().toLowerCase();
+          return tName === st || tName.includes(st) || st.includes(tName);
         });
       }
 
@@ -3063,7 +3064,7 @@
         if (vContainer) {
           vContainer.innerHTML = `<div style="text-align:center; padding:40px; color:#888;">
             <p style="font-size:15px; font-weight:700;">No batches found for trainer "${selectedTrainer}".</p>
-            <p style="font-size:13px; margin-top:6px;">Click "+ Create New Batch" above to assign a batch to this trainer.</p>
+            <p style="font-size:13px; margin-top:6px;">Select "All Trainers" from the dropdown above to view all batches.</p>
           </div>`;
         }
       }
@@ -3072,12 +3073,10 @@
     async function openBatchStudioModal(batchId = null) {
       document.getElementById('modal-batch-studio')?.classList.add('active');
       
-      if (!allBatches || allBatches.length === 0) {
-        try {
-          const res = await api.get(API_ENDPOINTS.BATCHES);
-          allBatches = Array.isArray(res.data) ? res.data : [];
-        } catch {}
-      }
+      try {
+        const res = await api.get(API_ENDPOINTS.BATCHES);
+        allBatches = Array.isArray(res.data) ? res.data : [];
+      } catch {}
 
       await loadTrainerDropdowns();
 

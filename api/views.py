@@ -492,30 +492,27 @@ class BatchListView(APIView):
 
     def get(self, request):
         category = request.query_params.get('category')
+        trainer = request.query_params.get('trainer')
         
-        # If admin, return all active batches
-        if request.user.is_authenticated and getattr(request.user, 'role', '') == 'admin':
-            qs = Batch.objects.filter(is_active=True)
-            if category and category != 'All':
-                qs = qs.filter(category=category)
-            return Response(BatchSerializer(qs, many=True, context={'request': request}).data)
+        qs = Batch.objects.filter(is_active=True)
 
         # For student: show ONLY batches where they are enrolled or their email is in allowed_emails
-        if request.user.is_authenticated:
+        if request.user.is_authenticated and not (request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'trainer', 'faculty')):
             sync_user_batch_enrollments(request.user)
             enrolled_ids = BatchEnrollment.objects.filter(user=request.user).values_list('batch_id', flat=True)
             user_email = (getattr(request.user, 'email', '') or '').strip().lower()
 
-            qs = Batch.objects.filter(is_active=True).filter(
+            qs = qs.filter(
                 models.Q(id__in=enrolled_ids) |
                 (models.Q(allowed_emails__icontains=user_email) if user_email else models.Q(pk__in=[]))
             ).distinct()
-            if category and category != 'All':
-                qs = qs.filter(category=category)
-            return Response(BatchSerializer(qs, many=True, context={'request': request}).data)
 
-        # Unauthenticated users: do not expose batch list
-        return Response([])
+        if category and category != 'All':
+            qs = qs.filter(category=category)
+        if trainer and trainer != 'ALL':
+            qs = qs.filter(instructor_name__iexact=trainer)
+
+        return Response(BatchSerializer(qs, many=True, context={'request': request}).data)
 
     def post(self, request):
         serializer = BatchSerializer(data=request.data, context={'request': request})
