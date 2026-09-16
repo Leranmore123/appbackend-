@@ -773,7 +773,14 @@
       <div class="control-card" onclick="openModal('modal-manage-students')">
         <div class="control-icon" style="background: rgba(33, 150, 243, 0.15); color: #2196F3;">🧑‍🎓</div>
         <span class="control-label">Manage Students</span>
-        <span class="control-sub">Student Roster & Enroll</span>
+        <span class="control-sub">Student Roster & Accounts</span>
+      </div>
+
+      <!-- 4b. Manage Trainers -->
+      <div class="control-card" onclick="openModal('modal-manage-trainers')">
+        <div class="control-icon" style="background: rgba(99, 102, 241, 0.15); color: #6366F1;">👨‍🏫</div>
+        <span class="control-label">Manage Trainers</span>
+        <span class="control-sub">Faculty & Trainer Roster</span>
       </div>
 
       <!-- 5. Categories -->
@@ -1351,7 +1358,28 @@
         <button class="btn-close-modal" onclick="closeModal('modal-manage-students')">✕</button>
       </div>
       <div class="modal-body">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 18px;">
+          <h4 style="font-weight: 800;">All Student Accounts</h4>
+          <button class="btn-primary" style="padding: 9px 16px; font-size: 13px;" onclick="openModal('modal-add-admin'); document.getElementById('admin-role').value='student';">+ Add New Student</button>
+        </div>
         <div id="students-table-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: Manage Trainers ── -->
+  <div class="modal-overlay" id="modal-manage-trainers">
+    <div class="modal-content" style="max-width: 850px;">
+      <div class="modal-header">
+        <h3 class="modal-title">👨‍🏫 Registered Trainers & Faculty</h3>
+        <button class="btn-close-modal" onclick="closeModal('modal-manage-trainers')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 18px;">
+          <h4 style="font-weight: 800;">Faculty & Trainer List</h4>
+          <button class="btn-primary" style="padding: 9px 16px; font-size: 13px;" onclick="openModal('modal-add-admin'); document.getElementById('admin-role').value='trainer';">+ Add New Trainer</button>
+        </div>
+        <div id="trainers-table-container"></div>
       </div>
     </div>
   </div>
@@ -1795,6 +1823,7 @@
       if (id === 'modal-batch-studio') openBatchStudioModal();
       if (id === 'modal-manage-courses') { loadCoursesTable(); loadCategoryDropdowns(); }
       if (id === 'modal-manage-students') loadStudentsTable();
+      if (id === 'modal-manage-trainers') loadTrainersTable();
       if (id === 'modal-manage-batches') { loadBatchesTable(); loadCategoryDropdowns(); }
       if (id === 'modal-payments') loadPaymentsTable();
       if (id === 'modal-doubts') loadDoubtsList();
@@ -2142,14 +2171,67 @@
       if (!el) return;
       try {
         const res = await api.get(API_ENDPOINTS.USER_ALL);
-        const studs = (Array.isArray(res.data)?res.data:[]).filter(u => u.role !== 'admin');
-        let html = '<div class="table-responsive"><table class="custom-table"><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th></tr></thead><tbody>';
-        studs.forEach(s => {
-          html += `<tr><td><strong>${s.name}</strong></td><td>${s.email}</td><td>${s.phone||'-'}</td><td><span class="badge badge-blue">Student</span></td></tr>`;
-        });
+        const studs = (Array.isArray(res.data)?res.data:[]).filter(u => u.role === 'student' || (!u.is_staff && u.role !== 'admin' && u.role !== 'trainer'));
+        let html = '<div class="table-responsive"><table class="custom-table"><thead><tr><th>Name</th><th>Email (Google Mail)</th><th>Phone</th><th>Role</th></tr></thead><tbody>';
+        if (studs.length === 0) {
+          html += '<tr><td colspan="4" style="text-align:center; padding:20px; color:#888;">No students registered yet.</td></tr>';
+        } else {
+          studs.forEach(s => {
+            html += `<tr><td><strong>${s.name}</strong></td><td>${s.email}</td><td>${s.phone||'-'}</td><td><span class="badge badge-blue">Student</span></td></tr>`;
+          });
+        }
         html += '</tbody></table></div>';
         el.innerHTML = html;
       } catch { el.innerHTML = '<p>Could not load students.</p>'; }
+    }
+
+    async function loadTrainersTable() {
+      const el = document.getElementById('trainers-table-container');
+      if (!el) return;
+      try {
+        const [usersRes, batchesRes] = await Promise.all([
+          api.get(API_ENDPOINTS.USER_ALL),
+          api.get(API_ENDPOINTS.BATCHES).catch(() => ({ data: [] }))
+        ]);
+        const allUsers = Array.isArray(usersRes.data) ? usersRes.data : [];
+        const batches = Array.isArray(batchesRes.data) ? batchesRes.data : [];
+        
+        const trainers = allUsers.filter(u => u.role === 'trainer' || u.role === 'faculty' || (u.role === 'admin' && u.is_staff) || u.is_staff);
+        
+        let html = '<div class="table-responsive"><table class="custom-table"><thead><tr><th>Trainer Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Assigned Batches</th></tr></thead><tbody>';
+        
+        if (trainers.length === 0) {
+          html += '<tr><td colspan="5" style="text-align:center; padding:20px; color:#888;">No trainers registered yet. Click "+ Add New Trainer" above.</td></tr>';
+        } else {
+          trainers.forEach(t => {
+            const tName = (t.name || t.email || '').trim().toLowerCase();
+            const assigned = batches.filter(b => {
+              const bTrainer = ((b.instructor && b.instructor.name) || b.instructor_name || '').trim().toLowerCase();
+              return bTrainer && bTrainer === tName;
+            });
+            
+            const badgeClass = t.role === 'admin' ? 'badge-primary' : 'badge-blue';
+            const roleName = t.role === 'admin' ? '👑 Admin' : '👨‍🏫 Trainer';
+            
+            html += `<tr>
+              <td><strong>👨‍🏫 ${t.name || '-'}</strong></td>
+              <td>${t.email}</td>
+              <td>${t.phone || '-'}</td>
+              <td><span class="badge ${badgeClass}">${roleName}</span></td>
+              <td>
+                ${assigned.length > 0 
+                  ? assigned.map(b => `<span class="badge" style="background:#EEF2FF; color:#4F46E5; margin-right:4px;">🎯 ${b.name}</span>`).join('') 
+                  : '<span style="color:#94A3B8; font-size:12px;">No batch assigned yet</span>'}
+              </td>
+            </tr>`;
+          });
+        }
+        
+        html += '</tbody></table></div>';
+        el.innerHTML = html;
+      } catch {
+        el.innerHTML = '<p style="color:red; text-align:center; padding:20px;">Could not load trainers list.</p>';
+      }
     }
 
     
