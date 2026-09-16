@@ -5,6 +5,8 @@ urlpatterns = [
     # ── Auth ──────────────────────────────────────────────────────────────────
     path('auth/register', views.RegisterView.as_view(), name='register'),
     path('auth/login', views.LoginView.as_view(), name='login'),
+    path('auth/google/', views.GoogleAuthView.as_view(), name='auth-google'),
+    path('auth/google', views.GoogleAuthView.as_view(), name='auth-google-noslash'),
     path('auth/profile', views.ProfileView.as_view(), name='auth-profile'),
 
     # ── Categories ────────────────────────────────────────────────────────────

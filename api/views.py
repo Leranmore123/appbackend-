@@ -145,6 +145,68 @@ class ProfileView(APIView):
         return Response(UserProfileSerializer(request.user).data)
 
 
+class GoogleAuthView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = (request.data.get('email') or '').strip().lower()
+        name = (request.data.get('name') or '').strip()
+        avatar = (request.data.get('avatar') or request.data.get('photoUrl') or request.data.get('picture') or '').strip()
+
+        if not email:
+            return Response({'error': 'Google Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if existing user is admin or trainer
+        existing_user = User.objects.filter(email__iexact=email).first()
+        is_staff_or_admin = existing_user and (existing_user.role in ['admin', 'trainer', 'faculty'] or existing_user.is_staff)
+
+        # Find matching active batches where this email is in allowed_emails
+        all_batches = Batch.objects.filter(is_active=True).exclude(allowed_emails__isnull=True).exclude(allowed_emails='')
+        matched_batches = [b for b in all_batches if email in b.get_allowed_email_list()]
+
+        if not matched_batches and not is_staff_or_admin:
+            return Response({
+                'error': 'તમારો Google Mail ID કોઈ પણ Batch માં એડ કરેલ નથી. કૃપા કરીને તમારા Trainer નો સંપર્ક કરો.',
+                'message': 'Your Google Email is not enrolled in any batch. Please contact your trainer to add your email.',
+                'not_enrolled': True
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        if not name:
+            name = email.split('@')[0].capitalize()
+        if not avatar:
+            avatar = f"https://ui-avatars.com/api/?name={name}&background=FF6B35&color=fff"
+
+        if not existing_user:
+            import secrets
+            random_pw = secrets.token_urlsafe(16)
+            user = User.objects.create_user(
+                email=email,
+                username=email,
+                name=name,
+                avatar=avatar,
+                role='student',
+                password=random_pw,
+                phone=request.data.get('phone', '')
+            )
+        else:
+            user = existing_user
+            updated = False
+            if name and (not user.name or user.name == 'User' or user.name == email):
+                user.name = name
+                updated = True
+            if avatar and avatar != user.avatar:
+                user.avatar = avatar
+                updated = True
+            if updated:
+                user.save(update_fields=['name', 'avatar'])
+
+        # Auto enroll student in all matched batches
+        for b in matched_batches:
+            BatchEnrollment.objects.get_or_create(user=user, batch=b)
+
+        return Response(UserSerializer(user, context={'include_token': True}).data, status=status.HTTP_200_OK)
+
+
 # ── Categories ────────────────────────────────────────────────────────────────
 
 class CategoryListView(APIView):
