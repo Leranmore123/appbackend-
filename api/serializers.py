@@ -19,13 +19,25 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ['name', 'email', 'phone', 'password', 'role']
 
+    def validate_phone(self, value):
+        if value and User.objects.filter(phone=value).exists():
+            raise serializers.ValidationError("This phone number is already registered.")
+        return value
+
+    def validate_email(self, value):
+        if value and User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("This email address is already registered.")
+        return value.lower()
+
     def create(self, validated_data):
         role = validated_data.pop('role', 'student')
+        if role in ('admin', 'trainer', 'faculty'):
+            validated_data['role'] = role
+            validated_data['is_staff'] = True
+        else:
+            validated_data['role'] = 'student'
+            validated_data['is_staff'] = False
         user = User.objects.create_user(**validated_data)
-        if role in ('admin', 'trainer'):
-            user.role = 'admin'
-            user.is_staff = True
-            user.save(update_fields=['role', 'is_staff'])
         return user
 
 

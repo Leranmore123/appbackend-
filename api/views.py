@@ -5,7 +5,7 @@ from rest_framework import status, generics
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.conf import settings
-from django.db import models
+from django.db import models, IntegrityError
 
 from .models import (
     User, Category, Course, CourseEnrollment, Batch, BatchEnrollment,
@@ -46,7 +46,15 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
+            try:
+                user = serializer.save()
+            except IntegrityError as e:
+                err_msg = str(e).lower()
+                if 'phone' in err_msg:
+                    return Response({'phone': ['This phone number is already registered.']}, status=status.HTTP_400_BAD_REQUEST)
+                elif 'email' in err_msg:
+                    return Response({'email': ['This email address is already registered.']}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'A user with this email or phone already exists.'}, status=status.HTTP_400_BAD_REQUEST)
             sync_user_batch_enrollments(user)
             return Response(
                 UserSerializer(user, context={'include_token': True}).data,
