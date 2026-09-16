@@ -1970,7 +1970,7 @@
       }
     }
 
-    async function loadUploadVideoModule() {
+    async function loadUploadVideoModule(preSelectTarget = null, preSelectSectionId = null) {
       const sel = document.getElementById('upload-course-select');
       if (sel) {
         sel.innerHTML = '<option value="">-- Select Course or Batch --</option>';
@@ -1991,20 +1991,24 @@
           allBatches.forEach(b => {
             const opt = document.createElement('option');
             opt.value = `batch_${b._id || b.id}`;
-            opt.textContent = `Batch: ${b.name}`;
+            const tLabel = (b.instructor && b.instructor.name) || b.instructor_name || '';
+            opt.textContent = `Batch: ${b.name} (${tLabel ? tLabel + ' - ' : ''}${b.category || 'General'})`;
             batchGroup.appendChild(opt);
           });
           sel.appendChild(batchGroup);
         }
 
-        if (sel.options.length > 1 && !sel.value) {
+        if (preSelectTarget) {
+          sel.value = preSelectTarget;
+          await onUploadCourseChange(preSelectSectionId);
+        } else if (sel.options.length > 1 && !sel.value) {
           sel.selectedIndex = 1;
-          onUploadCourseChange();
+          await onUploadCourseChange();
         }
       }
     }
 
-    async function onUploadCourseChange() {
+    async function onUploadCourseChange(preSelectSectionId = null) {
       const targetVal = document.getElementById('upload-course-select')?.value;
       const sectionSel = document.getElementById('upload-section-select');
       if (!targetVal) return;
@@ -2030,7 +2034,11 @@
               opt.textContent = `📁 ${s.title}`;
               sectionSel.appendChild(opt);
             });
-            sectionSel.value = sections[0]._id || sections[0].id;
+            if (preSelectSectionId && sections.some(s => String(s._id || s.id) === String(preSelectSectionId))) {
+              sectionSel.value = String(preSelectSectionId);
+            } else {
+              sectionSel.value = sections[0]._id || sections[0].id;
+            }
           } else {
             sectionSel.innerHTML = '<option value="">📁 Main / Default Section</option>';
           }
@@ -2687,14 +2695,10 @@
     let currentStudioBatchId = null;
 
     
-    function openBatchVideoUpload(batchId) {
+    async function openBatchVideoUpload(batchId, sectionId = null) {
       if (!batchId) batchId = currentStudioBatchId;
       openModal('modal-upload-video');
-      const sel = document.getElementById('upload-course-select');
-      if (sel && batchId) {
-        sel.value = `batch_${batchId}`;
-        onUploadCourseChange();
-      }
+      await loadUploadVideoModule(`batch_${batchId}`, sectionId);
     }
 
     
@@ -2897,15 +2901,28 @@
             </td>
           </tr>`;
 
-          vHtml += `<div style="border:1px solid var(--border); border-radius:10px; margin-bottom:14px; overflow:hidden;">
-            <div style="background:#F8FAFC; padding:12px 16px; font-weight:800; display:flex; justify-content:space-between; align-items:center;">
-              <span>📁 Section ${sIdx+1}: ${sec.title}</span>
-              <span class="badge badge-blue">${lecs.length} Video(s)</span>
+          vHtml += `<div style="border:1px solid var(--border); border-radius:12px; margin-bottom:16px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.03); transition:all 0.2s ease;">
+            <div style="background:#F8FAFC; padding:14px 18px; font-weight:800; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E2E8F0; cursor:pointer;" onclick="openBatchVideoUpload('${batchId}', '${sec.id || sec._id}')" title="Click to upload video to this section">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:18px;">📁</span>
+                <span style="font-size:15px; color:#1E293B;">Section ${sIdx+1}: ${sec.title}</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px;" onclick="event.stopPropagation();">
+                <span class="badge badge-blue">${lecs.length} Video(s)</span>
+                <button type="button" class="btn-primary" style="padding:7px 14px; font-size:12px; border-radius:6px; box-shadow:none;" onclick="openBatchVideoUpload('${batchId}', '${sec.id || sec._id}')">
+                  ☁️ + Upload Video
+                </button>
+              </div>
             </div>
-            <div style="padding:10px 16px; background:white;">`;
+            <div style="padding:14px 18px; background:white;">`;
 
           if (lecs.length === 0) {
-            vHtml += '<p style="color:#888; font-size:13px; margin:6px 0;">No videos uploaded in this section yet.</p>';
+            vHtml += `<div style="text-align:center; padding:18px; color:#64748B; background:#F8FAFC; border-radius:8px; border:1px dashed #CBD5E1; margin:4px 0;">
+              <p style="font-size:13px; font-weight:700; color:#334155; margin-bottom:8px;">No videos uploaded in "${sec.title}" yet.</p>
+              <button type="button" class="btn-primary" style="padding:8px 16px; font-size:12px;" onclick="openBatchVideoUpload('${batchId}', '${sec.id || sec._id}')">
+                ☁️ + Upload Video to this Section
+              </button>
+            </div>`;
           } else {
             vHtml += '<div class="table-responsive"><table class="custom-table" style="margin:0;"><thead><tr><th>#</th><th>Title</th><th>Duration</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
             lecs.forEach((l, lIdx) => {
