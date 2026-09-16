@@ -2166,18 +2166,41 @@
       }
     }
 
+    async function deleteUserAccount(id, name, type) {
+      if (!confirm(`Are you sure you want to delete ${type} "${name}"?`)) return;
+      try {
+        await api.delete(`${API_BASE}/user/${id}/delete/`);
+        showToast(`✅ ${type} "${name}" deleted successfully.`, 'info');
+        if (type === 'Student') loadStudentsTable();
+        else loadTrainersTable();
+        loadTrainerDropdowns();
+        fetchStats();
+      } catch (err) {
+        const msg = err.response?.data?.message || `Error deleting ${type}.`;
+        showToast(`❌ ${msg}`, 'error');
+      }
+    }
+
     async function loadStudentsTable() {
       const el = document.getElementById('students-table-container');
       if (!el) return;
       try {
         const res = await api.get(API_ENDPOINTS.USER_ALL);
         const studs = (Array.isArray(res.data)?res.data:[]).filter(u => u.role === 'student' || (!u.is_staff && u.role !== 'admin' && u.role !== 'trainer'));
-        let html = '<div class="table-responsive"><table class="custom-table"><thead><tr><th>Name</th><th>Email (Google Mail)</th><th>Phone</th><th>Role</th></tr></thead><tbody>';
+        let html = '<div class="table-responsive"><table class="custom-table"><thead><tr><th>Name</th><th>Email (Google Mail)</th><th>Phone</th><th>Role</th><th>Action</th></tr></thead><tbody>';
         if (studs.length === 0) {
-          html += '<tr><td colspan="4" style="text-align:center; padding:20px; color:#888;">No students registered yet.</td></tr>';
+          html += '<tr><td colspan="5" style="text-align:center; padding:20px; color:#888;">No students registered yet.</td></tr>';
         } else {
           studs.forEach(s => {
-            html += `<tr><td><strong>${s.name}</strong></td><td>${s.email}</td><td>${s.phone||'-'}</td><td><span class="badge badge-blue">Student</span></td></tr>`;
+            html += `<tr>
+              <td><strong>${s.name}</strong></td>
+              <td>${s.email}</td>
+              <td>${s.phone||'-'}</td>
+              <td><span class="badge badge-blue">Student</span></td>
+              <td>
+                <button onclick="deleteUserAccount(${s.id}, '${(s.name || s.email).replace(/'/g, "\\'")}', 'Student')" style="color:red;border:none;background:none;cursor:pointer;font-weight:bold;">🗑️ Delete</button>
+              </td>
+            </tr>`;
           });
         }
         html += '</tbody></table></div>';
@@ -2198,10 +2221,10 @@
         
         const trainers = allUsers.filter(u => u.role === 'trainer' || u.role === 'faculty' || (u.role === 'admin' && u.is_staff) || u.is_staff);
         
-        let html = '<div class="table-responsive"><table class="custom-table"><thead><tr><th>Trainer Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Assigned Batches</th></tr></thead><tbody>';
+        let html = '<div class="table-responsive"><table class="custom-table"><thead><tr><th>Trainer Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Assigned Batches</th><th>Action</th></tr></thead><tbody>';
         
         if (trainers.length === 0) {
-          html += '<tr><td colspan="5" style="text-align:center; padding:20px; color:#888;">No trainers registered yet. Click "+ Add New Trainer" above.</td></tr>';
+          html += '<tr><td colspan="6" style="text-align:center; padding:20px; color:#888;">No trainers registered yet. Click "+ Add New Trainer" above.</td></tr>';
         } else {
           trainers.forEach(t => {
             const tName = (t.name || t.email || '').trim().toLowerCase();
@@ -2222,6 +2245,9 @@
                 ${assigned.length > 0 
                   ? assigned.map(b => `<span class="badge" style="background:#EEF2FF; color:#4F46E5; margin-right:4px;">🎯 ${b.name}</span>`).join('') 
                   : '<span style="color:#94A3B8; font-size:12px;">No batch assigned yet</span>'}
+              </td>
+              <td>
+                <button onclick="deleteUserAccount(${t.id}, '${(t.name || t.email).replace(/'/g, "\\'")}', 'Trainer')" style="color:red;border:none;background:none;cursor:pointer;font-weight:bold;">🗑️ Delete</button>
               </td>
             </tr>`;
           });
@@ -2679,16 +2705,25 @@
       const studioTrainerSel = document.getElementById('studio-trainer-select') || document.getElementById('studio-trainer-filter');
       const trainersSet = new Set();
 
-      // Fetch all registered users to extract real trainers & admins only
+      // Fetch all registered users to extract real trainers only
       try {
         const res = await api.get(API_ENDPOINTS.USER_ALL);
         const users = Array.isArray(res.data) ? res.data : [];
-        users.forEach(u => {
-          if (u.role === 'trainer' || u.role === 'faculty' || u.role === 'admin') {
+        
+        // Priority 1: explicitly role === 'trainer' or 'faculty'
+        const realTrainers = users.filter(u => u.role === 'trainer' || u.role === 'faculty');
+        if (realTrainers.length > 0) {
+          realTrainers.forEach(u => {
             const name = (u.name || u.email || '').trim();
             if (name) trainersSet.add(name);
-          }
-        });
+          });
+        } else {
+          // If no trainer registered yet, fallback to admin accounts
+          users.filter(u => u.role === 'admin').forEach(u => {
+            const name = (u.name || u.email || '').trim();
+            if (name) trainersSet.add(name);
+          });
+        }
       } catch (e) {
         console.log('Error loading users for trainers dropdown:', e);
       }

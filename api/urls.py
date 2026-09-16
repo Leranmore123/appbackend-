@@ -53,6 +53,7 @@ urlpatterns = [
     path('user/profile/', views.UserProfileUpdateView.as_view(), name='user-profile'),
     path('user/all/', views.UserListView.as_view(), name='user-list'),
     path('user/<int:pk>/role/', views.UserRoleUpdateView.as_view(), name='user-role'),
+    path('user/<int:pk>/delete/', views.UserDeleteView.as_view(), name='user-delete'),
     path('progress/me/', views.MyCourseProgressView.as_view(), name='my-progress'),
 
     # ── Attendance ────────────────────────────────────────────────────────────

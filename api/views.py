@@ -698,11 +698,26 @@ class UserRoleUpdateView(APIView):
         except User.DoesNotExist:
             return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         role = request.data.get('role')
-        if role not in ['student', 'admin']:
+        if role not in ['student', 'admin', 'trainer', 'faculty']:
             return Response({'message': 'Invalid role'}, status=status.HTTP_400_BAD_REQUEST)
         user.role = role
-        user.save(update_fields=['role'])
+        user.is_staff = role in ['admin', 'trainer', 'faculty']
+        user.save(update_fields=['role', 'is_staff'])
         return Response(UserProfileSerializer(user).data)
+
+
+class UserDeleteView(APIView):
+    permission_classes = [IsAdmin]
+
+    def delete(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+            if user.id == request.user.id:
+                return Response({'message': 'Cannot delete your own active admin account'}, status=status.HTTP_400_BAD_REQUEST)
+            user.delete()
+            return Response({'message': 'User deleted successfully'})
+        except User.DoesNotExist:
+            return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 # ── Attendance ────────────────────────────────────────────────────────────────
