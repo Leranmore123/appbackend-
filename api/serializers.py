@@ -59,7 +59,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['_id', 'name', 'email', 'phone', 'avatar', 'role', 'trainer_permissions', 'token']
+        fields = ['id', '_id', 'name', 'email', 'phone', 'avatar', 'role', 'trainer_permissions', 'token']
 
     def get_token(self, obj):
         if self.context.get('include_token', True):
@@ -76,7 +76,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['_id', 'name', 'email', 'phone', 'avatar', 'role', 'trainer_permissions']
+        fields = ['id', '_id', 'name', 'email', 'phone', 'avatar', 'role', 'trainer_permissions']
 
     def get__id(self, obj):
         return str(obj.id)

@@ -2544,10 +2544,10 @@
               <td>${s.phone||'-'}</td>
               <td><span class="badge badge-blue">Student</span></td>
               <td style="display:flex; gap:6px; align-items:center;">
-                <button type="button" class="btn-header" style="background:#0284C7; color:white; padding:5px 10px; font-size:12px;" onclick="openResetPasswordModal(${s.id}, '${(s.name || s.email).replace(/'/g, "\\'")}', '${(s.email).replace(/'/g, "\\'")}', 'Student')">
+                <button type="button" class="btn-header" style="background:#0284C7; color:white; padding:5px 10px; font-size:12px;" onclick="openResetPasswordModal('${s.id || s._id}', '${(s.name || s.email).replace(/'/g, "\\'")}', '${(s.email).replace(/'/g, "\\'")}', 'Student')">
                   🔑 Password
                 </button>
-                <button onclick="deleteUserAccount(${s.id}, '${(s.name || s.email).replace(/'/g, "\\'")}', 'Student')" style="color:red;border:none;background:none;cursor:pointer;font-weight:bold;">🗑️</button>
+                <button onclick="deleteUserAccount('${s.id || s._id}', '${(s.name || s.email).replace(/'/g, "\\'")}', 'Student')" style="color:red;border:none;background:none;cursor:pointer;font-weight:bold;">🗑️ Delete</button>
               </td>
             </tr>`;
           });
@@ -2596,13 +2596,13 @@
                   : '<span style="color:#94A3B8; font-size:12px;">No batch assigned yet</span>'}
               </td>
               <td style="display:flex; gap:6px; align-items:center;">
-                <button type="button" class="btn-header" style="background:#6366F1; color:white; padding:5px 10px; font-size:12px;" onclick="openTrainerPermissionsModal(${t.id}, '${(t.name || t.email).replace(/'/g, "\\'")}', '${(t.trainer_permissions || '').replace(/'/g, "\\'")}')">
+                <button type="button" class="btn-header" style="background:#6366F1; color:white; padding:5px 10px; font-size:12px;" onclick="openTrainerPermissionsModal('${t.id || t._id}', '${(t.name || t.email).replace(/'/g, "\\'")}', '${(t.trainer_permissions || '').replace(/'/g, "\\'")}')">
                   ⚙️ Access Rights
                 </button>
-                <button type="button" class="btn-header" style="background:#0284C7; color:white; padding:5px 10px; font-size:12px;" onclick="openResetPasswordModal(${t.id}, '${(t.name || t.email).replace(/'/g, "\\'")}', '${(t.email).replace(/'/g, "\\'")}', 'Trainer')">
+                <button type="button" class="btn-header" style="background:#0284C7; color:white; padding:5px 10px; font-size:12px;" onclick="openResetPasswordModal('${t.id || t._id}', '${(t.name || t.email).replace(/'/g, "\\'")}', '${(t.email).replace(/'/g, "\\'")}', 'Trainer')">
                   🔑 Password
                 </button>
-                <button onclick="deleteUserAccount(${t.id}, '${(t.name || t.email).replace(/'/g, "\\'")}', 'Trainer')" style="color:red;border:none;background:none;cursor:pointer;font-weight:bold;">🗑️</button>
+                <button onclick="deleteUserAccount('${t.id || t._id}', '${(t.name || t.email).replace(/'/g, "\\'")}', 'Trainer')" style="color:red;border:none;background:none;cursor:pointer;font-weight:bold;">🗑️</button>
               </td>
             </tr>`;
           });
