@@ -3041,31 +3041,50 @@
       const sel = document.getElementById('studio-batch-select');
       if (!sel) return;
 
-      let filtered = allBatches || [];
+      const batches = allBatches || [];
+      let filtered = batches;
+      
       if (selectedTrainer && selectedTrainer !== 'ALL') {
         const st = selectedTrainer.trim().toLowerCase();
-        filtered = filtered.filter(b => {
+        filtered = batches.filter(b => {
           const tName = ((b.instructor && b.instructor.name) || b.instructor_name || '').trim().toLowerCase();
-          return tName === st || tName.includes(st) || st.includes(tName);
+          return tName === st || (tName && st && (tName.includes(st) || st.includes(tName)));
         });
       }
 
       sel.innerHTML = '<option value="">-- Choose Batch --</option>';
       if (filtered.length > 0) {
         filtered.forEach(b => {
-          const tLabel = (b.instructor && b.instructor.name) || b.instructor_name || '';
-          sel.innerHTML += `<option value="${b._id || b.id}">🎯 ${b.name} (${tLabel ? tLabel + ' - ' : ''}${b.category || 'General'})</option>`;
+          const tLabel = (b.instructor && b.instructor.name) || b.instructor_name || 'No Trainer';
+          sel.innerHTML += `<option value="${b._id || b.id}">🎯 ${b.name} (${tLabel} - ${b.category || 'General'})</option>`;
         });
         sel.selectedIndex = 1;
         onStudioBatchSelect(sel.value);
       } else {
-        onStudioBatchSelect('');
-        const vContainer = document.getElementById('studio-videos-accordion-container');
-        if (vContainer) {
-          vContainer.innerHTML = `<div style="text-align:center; padding:40px; color:#888;">
-            <p style="font-size:15px; font-weight:700;">No batches found for trainer "${selectedTrainer}".</p>
-            <p style="font-size:13px; margin-top:6px;">Select "All Trainers" from the dropdown above to view all batches.</p>
-          </div>`;
+        // If this specific trainer has no batch, show all batches with an optgroup so user is never blocked
+        if (batches.length > 0) {
+          sel.innerHTML += `<option value="" disabled style="color:#E11D48; font-weight:bold;">⚠️ No batches directly assigned to "${selectedTrainer}"</option>`;
+          sel.innerHTML += `<optgroup label="🌟 All Other Available Batches">`;
+          batches.forEach(b => {
+            const tLabel = (b.instructor && b.instructor.name) || b.instructor_name || 'No Trainer';
+            sel.innerHTML += `<option value="${b._id || b.id}">🎯 ${b.name} (${tLabel} - ${b.category || 'General'})</option>`;
+          });
+          sel.innerHTML += `</optgroup>`;
+          // Auto-select the first available batch
+          const firstOpt = sel.querySelector('optgroup option');
+          if (firstOpt) {
+            sel.value = firstOpt.value;
+            onStudioBatchSelect(firstOpt.value);
+          }
+        } else {
+          onStudioBatchSelect('');
+          const vContainer = document.getElementById('studio-videos-accordion-container');
+          if (vContainer) {
+            vContainer.innerHTML = `<div style="text-align:center; padding:40px; color:#888;">
+              <p style="font-size:15px; font-weight:700;">No batches created yet in the database.</p>
+              <p style="font-size:13px; margin-top:6px;">Click "+ Create New Batch" above to create your first batch.</p>
+            </div>`;
+          }
         }
       }
     }
@@ -3076,11 +3095,17 @@
       try {
         const res = await api.get(API_ENDPOINTS.BATCHES);
         allBatches = Array.isArray(res.data) ? res.data : [];
-      } catch {}
+      } catch (err) {
+        console.log('Error fetching batches in studio modal:', err);
+      }
 
       await loadTrainerDropdowns();
 
       const studioTrainerSel = document.getElementById('studio-trainer-select');
+      // Default to ALL trainers to show all batches by default
+      if (studioTrainerSel && !batchId && studioTrainerSel.value !== 'ALL') {
+        // Keep current value if user chose it, else default to ALL
+      }
       const selectedTrainer = studioTrainerSel ? studioTrainerSel.value : 'ALL';
       onStudioTrainerFilter(selectedTrainer);
 
