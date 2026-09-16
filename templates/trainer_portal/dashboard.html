@@ -2636,19 +2636,32 @@
         return;
       }
 
-      if (btn) btn.disabled = true;
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+      }
 
       try {
-        await api.post(`/api/user/${userId}/password/`, {
+        const res = await api.post(`/api/user/${userId}/password/`, {
           password: newPassword
         });
-        showToast(`✅ Password for "${userName}" changed successfully!`, 'success');
+        showToast(res.data?.message || `✅ Password for "${userName}" changed successfully!`, 'success');
         closeModal('modal-reset-user-password');
       } catch (err) {
-        const msg = err.response?.data?.message || 'Error changing password.';
+        console.error('Password reset error:', err);
+        const data = err.response?.data;
+        let msg = 'Error changing password.';
+        if (typeof data === 'string') msg = data;
+        else if (data?.message) msg = data.message;
+        else if (data?.detail) msg = data.detail;
+        else if (data?.error) msg = data.error;
+        else if (err.message) msg = err.message;
         showToast(`❌ ${msg}`, 'error');
       } finally {
-        if (btn) btn.disabled = false;
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '💾 Save New Password';
+        }
       }
     }
 

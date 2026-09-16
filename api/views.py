@@ -877,26 +877,34 @@ class UserPermissionsUpdateView(APIView):
 
 
 class UserPasswordResetView(APIView):
-    permission_classes = [IsAdmin]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
-        if not (request.user.is_superuser or getattr(request.user, 'role', '') == 'admin'):
-            return Response({'message': 'Admin permission required'}, status=status.HTTP_403_FORBIDDEN)
+        user_role = (getattr(request.user, 'role', '') or '').lower()
+        is_staff = getattr(request.user, 'is_staff', False)
+        is_superuser = getattr(request.user, 'is_superuser', False)
+
+        if not (is_superuser or is_staff or user_role in ['admin', 'trainer', 'faculty']):
+            return Response({'message': 'Admin or Staff permission required', 'detail': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
         try:
-            user = User.objects.get(pk=pk)
+            target_user = User.objects.get(pk=pk)
         except User.DoesNotExist:
-            return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'message': 'User not found', 'detail': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
         new_password = (request.data.get('password') or '').strip()
         if not new_password:
-            return Response({'message': 'Password cannot be empty'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'Password cannot be empty', 'detail': 'Password cannot be empty'}, status=status.HTTP_400_BAD_REQUEST)
 
         if len(new_password) < 4:
-            return Response({'message': 'Password must be at least 4 characters'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'Password must be at least 4 characters', 'detail': 'Password must be at least 4 characters'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user.set_password(new_password)
-        user.save()
-        return Response({'message': f'Password for {user.name or user.email} updated successfully!'}, status=status.HTTP_200_OK)
+        target_user.set_password(new_password)
+        target_user.save()
+        return Response({
+            'message': f'Password for {target_user.name or target_user.email} updated successfully!',
+            'success': True
+        }, status=status.HTTP_200_OK)
 
 
 class UserDeleteView(APIView):
