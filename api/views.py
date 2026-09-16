@@ -179,14 +179,14 @@ class GoogleAuthView(APIView):
         if not existing_user:
             import secrets
             random_pw = secrets.token_urlsafe(16)
+            auto_phone = request.data.get('phone') or f"G_{email.split('@')[0][:8]}_{secrets.token_hex(3)}"
             user = User.objects.create_user(
                 email=email,
-                username=email,
                 name=name,
+                phone=auto_phone,
                 avatar=avatar,
                 role='student',
-                password=random_pw,
-                phone=request.data.get('phone', '')
+                password=random_pw
             )
         else:
             user = existing_user
@@ -1589,20 +1589,21 @@ class UploadVideoView(APIView):
     def post(self, request, course_id):
         file = request.FILES.get('video')
 
-        # If a file is provided, save to local disk
+        # If a file is provided, save via default_storage (S3 or local disk)
         if file:
             c_id_folder = str(course_id) if course_id and int(course_id) > 0 else 'batches'
-            upload_dir = os.path.join(settings.MEDIA_ROOT, 'videos', c_id_folder)
-            os.makedirs(upload_dir, exist_ok=True)
-
-            # Sanitize filename
             safe_name = file.name.replace(' ', '_')
-            file_path = os.path.join(upload_dir, safe_name)
-            with open(file_path, 'wb+') as dest:
-                for chunk in file.chunks():
-                    dest.write(chunk)
+            save_path = f"videos/{c_id_folder}/{safe_name}"
 
-            video_url = f"{request.scheme}://{request.get_host()}{settings.MEDIA_URL}videos/{c_id_folder}/{safe_name}"
+            from django.core.files.storage import default_storage
+            saved_path = default_storage.save(save_path, file)
+            storage_url = default_storage.url(saved_path)
+
+            if storage_url.startswith('http://') or storage_url.startswith('https://'):
+                video_url = storage_url
+            else:
+                video_url = f"{request.scheme}://{request.get_host()}{storage_url}"
+
 
             # Create lecture
             title = request.data.get('title', safe_name)

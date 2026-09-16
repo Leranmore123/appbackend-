@@ -82,6 +82,8 @@ AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = None
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 
+MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')
+
 if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:
     # Use S3 for user media uploads (videos, images, PDFs)
     DEFAULT_FILE_STORAGE = 'pwbackend.custom_storage.MediaStorage'
@@ -90,7 +92,6 @@ if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:
 else:
     # Fallback to local storage for offline / local testing
     MEDIA_URL = '/uploads/'
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
