@@ -737,10 +737,10 @@
       <button class="btn-header" style="background: #1A1A2E;" onclick="fetchStats()">🔄 Refresh Data</button>
     </div>
 
-    <!-- ── 15+ Control Cards with Role-Based Access Control ── -->
+    <!-- ── 15+ Control Cards with Role-Based Access Control & Permissions ── -->
     <div class="controls-grid" id="dashboard-controls-grid">
       <!-- 0. Batch Studio (Direct Batch Dashboard) -->
-      <div class="control-card" id="card-batch-studio" data-roles="admin,trainer,faculty" onclick="openBatchStudioModal()" style="border: 2px solid #6366F1; background: linear-gradient(135deg, #FFFFFF 0%, #EEF2FF 100%);">
+      <div class="control-card" id="card-batch-studio" data-permission="batch_studio" data-roles="admin,trainer,faculty" onclick="openBatchStudioModal()" style="border: 2px solid #6366F1; background: linear-gradient(135deg, #FFFFFF 0%, #EEF2FF 100%);">
         <span class="highlight-badge" style="background:#6366F1;">🎯 Batch Studio</span>
         <div class="control-icon" style="background: rgba(99, 102, 241, 0.15); color: #6366F1;">🎯</div>
         <span class="control-label">Batch Dashboard</span>
@@ -748,120 +748,120 @@
       </div>
 
       <!-- 1. Upload Video -->
-      <div class="control-card" id="card-upload-video" data-roles="admin,trainer,faculty" onclick="openModal('modal-upload-video')" style="border: 2px solid var(--primary);">
+      <div class="control-card" id="card-upload-video" data-permission="upload_video" data-roles="admin,trainer,faculty" onclick="openModal('modal-upload-video')" style="border: 2px solid var(--primary);">
         <span class="highlight-badge">Trainer Main</span>
         <div class="control-icon" style="background: rgba(233, 30, 99, 0.15); color: #E91E63;">☁️</div>
         <span class="control-label">Upload Video</span>
         <span class="control-sub">Drag & Drop MP4 or YouTube</span>
       </div>
 
-      <!-- 2. Manage Courses (Admin only) -->
-      <div class="control-card" id="card-manage-courses" data-roles="admin" onclick="openModal('modal-manage-courses')">
+      <!-- 2. Manage Courses (Admin only by default) -->
+      <div class="control-card" id="card-manage-courses" data-permission="manage_courses" data-roles="admin" onclick="openModal('modal-manage-courses')">
         <div class="control-icon" style="background: rgba(255, 107, 53, 0.15); color: #FF6B35;">📚</div>
         <span class="control-label">Manage Courses</span>
         <span class="control-sub">Create & Edit Courses</span>
       </div>
 
       <!-- 3. Manage Batches (Admin & Trainer) -->
-      <div class="control-card" id="card-manage-batches" data-roles="admin,trainer,faculty" onclick="openModal('modal-manage-batches')">
+      <div class="control-card" id="card-manage-batches" data-permission="manage_batches" data-roles="admin,trainer,faculty" onclick="openModal('modal-manage-batches')">
         <div class="control-icon" style="background: rgba(76, 175, 80, 0.15); color: #4CAF50;">👥</div>
         <span class="control-label">Manage Batches</span>
         <span class="control-sub">Live & Offline Batches</span>
       </div>
 
-      <!-- 4. Manage Students (Admin only) -->
-      <div class="control-card" id="card-manage-students" data-roles="admin" onclick="openModal('modal-manage-students')">
+      <!-- 4. Manage Students (Admin only by default) -->
+      <div class="control-card" id="card-manage-students" data-permission="manage_students" data-roles="admin" onclick="openModal('modal-manage-students')">
         <div class="control-icon" style="background: rgba(33, 150, 243, 0.15); color: #2196F3;">🧑‍🎓</div>
         <span class="control-label">Manage Students</span>
         <span class="control-sub">Student Roster & Accounts</span>
       </div>
 
-      <!-- 4b. Manage Trainers (Admin only) -->
-      <div class="control-card" id="card-manage-trainers" data-roles="admin" onclick="openModal('modal-manage-trainers')">
+      <!-- 4b. Manage Trainers (Admin only by default) -->
+      <div class="control-card" id="card-manage-trainers" data-permission="manage_trainers" data-roles="admin" onclick="openModal('modal-manage-trainers')">
         <div class="control-icon" style="background: rgba(99, 102, 241, 0.15); color: #6366F1;">👨‍🏫</div>
         <span class="control-label">Manage Trainers</span>
         <span class="control-sub">Faculty & Trainer Roster</span>
       </div>
 
-      <!-- 5. Categories (Admin only) -->
-      <div class="control-card" id="card-categories" data-roles="admin" onclick="openModal('modal-categories')">
+      <!-- 5. Categories (Admin only by default) -->
+      <div class="control-card" id="card-categories" data-permission="categories" data-roles="admin" onclick="openModal('modal-categories')">
         <div class="control-icon" style="background: rgba(233, 30, 99, 0.15); color: #E91E63;">🏷️</div>
         <span class="control-label">Categories</span>
         <span class="control-sub">Organize Course Types</span>
       </div>
 
       <!-- Course Sections / Chapters -->
-      <div class="control-card" id="card-sections" data-roles="admin,trainer,faculty" onclick="openModal('modal-sections')">
+      <div class="control-card" id="card-sections" data-permission="sections" data-roles="admin,trainer,faculty" onclick="openModal('modal-sections')">
         <div class="control-icon" style="background: rgba(76, 175, 80, 0.15); color: #4CAF50;">📁</div>
         <span class="control-label">Course Sections</span>
         <span class="control-sub">Create Chapters & Modules</span>
       </div>
 
       <!-- 6. Schedule / Timetable -->
-      <div class="control-card" id="card-schedule" data-roles="admin,trainer,faculty" onclick="openModal('modal-schedule')">
+      <div class="control-card" id="card-schedule" data-permission="schedule" data-roles="admin,trainer,faculty" onclick="openModal('modal-schedule')">
         <div class="control-icon" style="background: rgba(0, 188, 212, 0.15); color: #00BCD4;">📅</div>
         <span class="control-label">Schedule/Timetable</span>
         <span class="control-sub">Zoom & Live Classes</span>
       </div>
 
       <!-- 7. Assignments -->
-      <div class="control-card" id="card-assignments" data-roles="admin,trainer,faculty" onclick="openModal('modal-assignments')">
+      <div class="control-card" id="card-assignments" data-permission="assignments" data-roles="admin,trainer,faculty" onclick="openModal('modal-assignments')">
         <div class="control-icon" style="background: rgba(255, 152, 0, 0.15); color: #FF9800;">📝</div>
         <span class="control-label">Assignments</span>
         <span class="control-sub">Create Tasks & Marks</span>
       </div>
 
       <!-- 8. Attendance -->
-      <div class="control-card" id="card-attendance" data-roles="admin,trainer,faculty" onclick="openModal('modal-attendance')">
+      <div class="control-card" id="card-attendance" data-permission="attendance" data-roles="admin,trainer,faculty" onclick="openModal('modal-attendance')">
         <div class="control-icon" style="background: rgba(0, 188, 212, 0.15); color: #00BCD4;">📊</div>
         <span class="control-label">Attendance</span>
         <span class="control-sub">Mark Student Presence</span>
       </div>
 
       <!-- 9. Send Notification -->
-      <div class="control-card" id="card-notification" data-roles="admin,trainer,faculty" onclick="openModal('modal-notification')">
+      <div class="control-card" id="card-notification" data-permission="notification" data-roles="admin,trainer,faculty" onclick="openModal('modal-notification')">
         <div class="control-icon" style="background: rgba(255, 87, 34, 0.15); color: #FF5722;">🔔</div>
         <span class="control-label">Send Notification</span>
         <span class="control-sub">Broadcast to App</span>
       </div>
 
-      <!-- 10. Payments (Admin only) -->
-      <div class="control-card" id="card-payments" data-roles="admin" onclick="openModal('modal-payments')">
+      <!-- 10. Payments (Admin only by default) -->
+      <div class="control-card" id="card-payments" data-permission="payments" data-roles="admin" onclick="openModal('modal-payments')">
         <div class="control-icon" style="background: rgba(96, 125, 139, 0.15); color: #607D8B;">💳</div>
         <span class="control-label">Payments</span>
         <span class="control-sub">Fee Receipts & Logs</span>
       </div>
 
       <!-- 11. Doubts (Q&A) -->
-      <div class="control-card" id="card-doubts" data-roles="admin,trainer,faculty" onclick="openModal('modal-doubts')">
+      <div class="control-card" id="card-doubts" data-permission="doubts" data-roles="admin,trainer,faculty" onclick="openModal('modal-doubts')">
         <div class="control-icon" style="background: rgba(121, 85, 72, 0.15); color: #795548;">💬</div>
         <span class="control-label">Doubts (Q&A)</span>
         <span class="control-sub">Student Questions & Reply</span>
       </div>
 
       <!-- 12. Manage Quizzes -->
-      <div class="control-card" id="card-quizzes" data-roles="admin,trainer,faculty" onclick="openModal('modal-quizzes')">
+      <div class="control-card" id="card-quizzes" data-permission="quizzes" data-roles="admin,trainer,faculty" onclick="openModal('modal-quizzes')">
         <div class="control-icon" style="background: rgba(103, 58, 183, 0.15); color: #673AB7;">❓</div>
         <span class="control-label">Manage Quizzes</span>
         <span class="control-sub">Create Online Tests</span>
       </div>
 
       <!-- 13. Coding Questions -->
-      <div class="control-card" id="card-coding" data-roles="admin,trainer,faculty" onclick="openModal('modal-coding')">
+      <div class="control-card" id="card-coding" data-permission="coding" data-roles="admin,trainer,faculty" onclick="openModal('modal-coding')">
         <div class="control-icon" style="background: rgba(0, 188, 212, 0.15); color: #00BCD4;">💻</div>
         <span class="control-label">Coding Questions</span>
         <span class="control-sub">Code Challenges</span>
       </div>
 
       <!-- 14. Add Lectures (Quick) -->
-      <div class="control-card" id="card-add-lectures" data-roles="admin,trainer,faculty" onclick="openModal('modal-upload-video')">
+      <div class="control-card" id="card-add-lectures" data-permission="add_lectures" data-roles="admin,trainer,faculty" onclick="openModal('modal-upload-video')">
         <div class="control-icon" style="background: rgba(156, 39, 176, 0.15); color: #9C27B0;">📹</div>
         <span class="control-label">Add Lectures</span>
         <span class="control-sub">Quick Lecture Entry</span>
       </div>
 
-      <!-- 15. Add User / Trainer / Student (Admin only) -->
-      <div class="control-card" id="card-add-admin" data-roles="admin" onclick="openModal('modal-add-admin')">
+      <!-- 15. Add User / Trainer / Student (Admin only by default) -->
+      <div class="control-card" id="card-add-admin" data-permission="add_admin" data-roles="admin" onclick="openModal('modal-add-admin')">
         <div class="control-icon" style="background: rgba(244, 67, 54, 0.15); color: #F44336;">👤</div>
         <span class="control-label">Add User Account</span>
         <span class="control-sub">Student, Trainer or Admin</span>
@@ -1470,7 +1470,7 @@
 
   <!-- ── MODAL: Manage Trainers ── -->
   <div class="modal-overlay" id="modal-manage-trainers">
-    <div class="modal-content" style="max-width: 850px;">
+    <div class="modal-content" style="max-width: 900px;">
       <div class="modal-header">
         <h3 class="modal-title">👨‍🏫 Registered Trainers & Faculty</h3>
         <button class="btn-close-modal" onclick="closeModal('modal-manage-trainers')">✕</button>
@@ -1481,6 +1481,116 @@
           <button class="btn-primary" style="padding: 9px 16px; font-size: 13px;" onclick="openModal('modal-add-admin'); document.getElementById('admin-role').value='trainer';">+ Add New Trainer</button>
         </div>
         <div id="trainers-table-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: Trainer Permissions Manager (Admin Only) ── -->
+  <div class="modal-overlay" id="modal-trainer-permissions">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%); color:white;">
+        <div>
+          <h3 class="modal-title" style="color:white; display:flex; align-items:center; gap:8px;">
+            ⚙️ Manage Access: <span id="perm-trainer-name" style="color:var(--accent-gold);"></span>
+          </h3>
+          <small style="color:#CBD5E1;">Check or uncheck boxes to control what this trainer can access on their dashboard.</small>
+        </div>
+        <button class="btn-close-modal" style="color:white;" onclick="closeModal('modal-trainer-permissions')">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <form id="form-trainer-permissions" onsubmit="handleSaveTrainerPermissions(event)">
+          <input type="hidden" id="perm-trainer-id">
+          
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <strong style="font-size:14px;">Dashboard Module Access:</strong>
+            <div style="display:flex; gap:8px;">
+              <button type="button" class="btn-header" style="font-size:12px; padding:4px 10px;" onclick="toggleAllTrainerPerms(true)">Select All</button>
+              <button type="button" class="btn-header" style="font-size:12px; padding:4px 10px;" onclick="toggleAllTrainerPerms(false)">Clear All</button>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px; background:#F8FAFC; border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:20px;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="batch_studio" style="width:16px; height:16px; accent-color:var(--primary);">
+              <span>🎯 Batch Studio</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="upload_video" style="width:16px; height:16px; accent-color:var(--primary);">
+              <span>☁️ Upload Video</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="manage_batches" style="width:16px; height:16px; accent-color:var(--primary);">
+              <span>👥 Manage Batches</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="sections" style="width:16px; height:16px; accent-color:var(--primary);">
+              <span>📁 Course Sections</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="schedule" style="width:16px; height:16px; accent-color:var(--primary);">
+              <span>📅 Schedule / Timetable</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="assignments" style="width:16px; height:16px; accent-color:var(--primary);">
+              <span>📝 Assignments</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="attendance" style="width:16px; height:16px; accent-color:var(--primary);">
+              <span>📊 Attendance</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="notification" style="width:16px; height:16px; accent-color:var(--primary);">
+              <span>🔔 Send Notification</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="doubts" style="width:16px; height:16px; accent-color:var(--primary);">
+              <span>💬 Doubts (Q&A)</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="quizzes" style="width:16px; height:16px; accent-color:var(--primary);">
+              <span>❓ Manage Quizzes</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="coding" style="width:16px; height:16px; accent-color:var(--primary);">
+              <span>💻 Coding Questions</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="add_lectures" style="width:16px; height:16px; accent-color:var(--primary);">
+              <span>📹 Add Lectures</span>
+            </label>
+
+            <!-- Admin Privileged Modules -->
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:#E11D48; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="payments" style="width:16px; height:16px; accent-color:#E11D48;">
+              <span>💳 Payments & Receipts</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:#E11D48; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="manage_students" style="width:16px; height:16px; accent-color:#E11D48;">
+              <span>🧑‍🎓 Manage Students</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:#E11D48; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="categories" style="width:16px; height:16px; accent-color:#E11D48;">
+              <span>🏷️ Categories</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:#E11D48; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="manage_courses" style="width:16px; height:16px; accent-color:#E11D48;">
+              <span>📚 Manage Courses</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:#E11D48; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="manage_trainers" style="width:16px; height:16px; accent-color:#E11D48;">
+              <span>👨‍🏫 Manage Trainers</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:#E11D48; cursor:pointer;">
+              <input type="checkbox" name="trainer_perm" value="add_admin" style="width:16px; height:16px; accent-color:#E11D48;">
+              <span>👤 Add User Account</span>
+            </label>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button type="button" class="btn-header" style="background:#E2E8F0; color:#333;" onclick="closeModal('modal-trainer-permissions')">Cancel</button>
+            <button type="submit" id="btn-save-trainer-perms" class="btn-primary" style="padding:10px 22px;">💾 Save Permissions</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -1817,17 +1927,31 @@
         badgeEl.textContent = isAdmin ? '👑 ADMIN PORTAL' : '👨‍🏫 TRAINER PORTAL';
       }
 
-      // Hide revenue stats card for non-admin trainers
-      const revenueCard = document.getElementById('stat-revenue')?.closest('.stat-card');
-      if (revenueCard) {
-        revenueCard.style.display = isAdmin ? 'flex' : 'none';
+      // Default trainer allowed permissions
+      const defaultTrainerPerms = ['batch_studio', 'upload_video', 'manage_batches', 'sections', 'schedule', 'assignments', 'attendance', 'notification', 'doubts', 'quizzes', 'coding', 'add_lectures'];
+      let allowedPerms = [];
+
+      if (isAdmin) {
+        allowedPerms = ['*']; // all
+      } else {
+        if (user.trainer_permissions && user.trainer_permissions.trim()) {
+          allowedPerms = user.trainer_permissions.split(',').map(p => p.trim());
+        } else {
+          allowedPerms = defaultTrainerPerms;
+        }
       }
 
-      // Filter control cards on dashboard based on data-roles
+      // Show/Hide revenue stat card based on 'payments' permission or admin
+      const revenueCard = document.getElementById('stat-revenue')?.closest('.stat-card');
+      if (revenueCard) {
+        revenueCard.style.display = (isAdmin || allowedPerms.includes('payments')) ? 'flex' : 'none';
+      }
+
+      // Filter control cards on dashboard based on data-permission
       const allCards = document.querySelectorAll('.control-card');
       allCards.forEach(card => {
-        const roles = (card.getAttribute('data-roles') || 'admin,trainer,faculty').split(',').map(r => r.trim());
-        if (isAdmin || roles.includes('trainer') || roles.includes(role)) {
+        const perm = card.getAttribute('data-permission');
+        if (isAdmin || allowedPerms.includes('*') || (perm && allowedPerms.includes(perm))) {
           card.style.display = 'flex';
         } else {
           card.style.display = 'none';
@@ -2425,8 +2549,11 @@
                   ? assigned.map(b => `<span class="badge" style="background:#EEF2FF; color:#4F46E5; margin-right:4px;">🎯 ${b.name}</span>`).join('') 
                   : '<span style="color:#94A3B8; font-size:12px;">No batch assigned yet</span>'}
               </td>
-              <td>
-                <button onclick="deleteUserAccount(${t.id}, '${(t.name || t.email).replace(/'/g, "\\'")}', 'Trainer')" style="color:red;border:none;background:none;cursor:pointer;font-weight:bold;">🗑️ Delete</button>
+              <td style="display:flex; gap:6px; align-items:center;">
+                <button type="button" class="btn-header" style="background:#6366F1; color:white; padding:5px 10px; font-size:12px;" onclick="openTrainerPermissionsModal(${t.id}, '${(t.name || t.email).replace(/'/g, "\\'")}', '${(t.trainer_permissions || '').replace(/'/g, "\\'")}')">
+                  ⚙️ Access Rights
+                </button>
+                <button onclick="deleteUserAccount(${t.id}, '${(t.name || t.email).replace(/'/g, "\\'")}', 'Trainer')" style="color:red;border:none;background:none;cursor:pointer;font-weight:bold;">🗑️</button>
               </td>
             </tr>`;
           });
@@ -2436,6 +2563,58 @@
         el.innerHTML = html;
       } catch {
         el.innerHTML = '<p style="color:red; text-align:center; padding:20px;">Could not load trainers list.</p>';
+      }
+    }
+
+    function openTrainerPermissionsModal(trainerId, trainerName, currentPerms) {
+      document.getElementById('perm-trainer-id').value = trainerId;
+      document.getElementById('perm-trainer-name').textContent = trainerName;
+
+      // Default permissions if none set
+      const defaultTrainerPerms = ['batch_studio', 'upload_video', 'manage_batches', 'sections', 'schedule', 'assignments', 'attendance', 'notification', 'doubts', 'quizzes', 'coding', 'add_lectures'];
+      
+      let permsArray = [];
+      if (currentPerms && currentPerms.trim()) {
+        permsArray = currentPerms.split(',').map(p => p.trim());
+      } else {
+        permsArray = defaultTrainerPerms;
+      }
+
+      const checkboxes = document.querySelectorAll('#form-trainer-permissions input[name="trainer_perm"]');
+      checkboxes.forEach(cb => {
+        cb.checked = permsArray.includes(cb.value);
+      });
+
+      openModal('modal-trainer-permissions');
+    }
+
+    function toggleAllTrainerPerms(check) {
+      const checkboxes = document.querySelectorAll('#form-trainer-permissions input[name="trainer_perm"]');
+      checkboxes.forEach(cb => {
+        cb.checked = check;
+      });
+    }
+
+    async function handleSaveTrainerPermissions(e) {
+      e.preventDefault();
+      const trainerId = document.getElementById('perm-trainer-id').value;
+      const checkboxes = document.querySelectorAll('#form-trainer-permissions input[name="trainer_perm"]:checked');
+      const selected = Array.from(checkboxes).map(cb => cb.value).join(',');
+
+      const btn = document.getElementById('btn-save-trainer-perms');
+      if (btn) btn.disabled = true;
+
+      try {
+        await api.put(`/api/user/${trainerId}/permissions/`, {
+          trainer_permissions: selected
+        });
+        showToast('✅ Trainer permissions updated successfully!', 'success');
+        closeModal('modal-trainer-permissions');
+        loadTrainersTable();
+      } catch (err) {
+        showToast('❌ Failed to update permissions.', 'error');
+      } finally {
+        if (btn) btn.disabled = false;
       }
     }
 

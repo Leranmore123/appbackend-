@@ -857,6 +857,25 @@ class UserRoleUpdateView(APIView):
         return Response(UserProfileSerializer(user).data)
 
 
+class UserPermissionsUpdateView(APIView):
+    permission_classes = [IsAdmin]
+
+    def put(self, request, pk):
+        if not (request.user.is_superuser or getattr(request.user, 'role', '') == 'admin'):
+            return Response({'message': 'Admin permission required'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        perms = request.data.get('trainer_permissions') or request.data.get('permissions', '')
+        if isinstance(perms, list):
+            perms = ','.join(perms)
+        user.trainer_permissions = str(perms).strip()
+        user.save(update_fields=['trainer_permissions'])
+        return Response(UserProfileSerializer(user).data)
+
+
 class UserDeleteView(APIView):
     permission_classes = [IsAdmin]
 

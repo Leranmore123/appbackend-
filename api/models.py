@@ -27,6 +27,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone = models.CharField(max_length=20, unique=True)
     avatar = models.URLField(default='https://ui-avatars.com/api/?name=User&background=FF6B35&color=fff')
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student')
+    trainer_permissions = models.TextField(default='', blank=True, help_text='Comma-separated box keys allowed for trainer')
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
