@@ -166,7 +166,7 @@ class BatchSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Batch
-        fields = ['_id', 'name', 'description', 'thumbnail', 'category',
+        fields = ['id', '_id', 'name', 'description', 'thumbnail', 'category',
                   'price', 'isFree', 'allowed_emails', 'allowedEmails', 'sections', 'isEnrolled',
                   'start_date', 'end_date', 'instructor',
                   'totalStudents', 'isLive', 'live_stream_url', 'isActive', 'created_at']

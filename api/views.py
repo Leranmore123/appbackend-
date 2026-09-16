@@ -600,7 +600,7 @@ class MyBatchesView(APIView):
 class BatchSectionListView(APIView):
     def get_permissions(self):
         if self.request.method == 'GET':
-            return [IsAuthenticated()]
+            return [AllowAny()]
         return [IsAdmin()]
 
     def get(self, request, batch_id):
@@ -638,7 +638,7 @@ class BatchSectionListView(APIView):
 
 
 class LectureByBatchView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, batch_id):
         qs = Lecture.objects.filter(batch__id=batch_id).order_by('order', 'id')
@@ -646,7 +646,10 @@ class LectureByBatchView(APIView):
 
 
 class BatchStudentManageView(APIView):
-    permission_classes = [IsAdmin]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAdmin()]
 
     def get(self, request, pk):
         try:
@@ -1589,20 +1592,38 @@ class UploadVideoView(APIView):
     def post(self, request, course_id):
         file = request.FILES.get('video')
 
-        # If a file is provided, save via default_storage (S3 or local disk)
+        # If a file is provided, save via S3 or local storage
         if file:
             c_id_folder = str(course_id) if course_id and int(course_id) > 0 else 'batches'
             safe_name = file.name.replace(' ', '_')
-            save_path = f"videos/{c_id_folder}/{safe_name}"
 
-            from django.core.files.storage import default_storage
-            saved_path = default_storage.save(save_path, file)
-            storage_url = default_storage.url(saved_path)
-
-            if storage_url.startswith('http://') or storage_url.startswith('https://'):
-                video_url = storage_url
+            if getattr(settings, 'AWS_ACCESS_KEY_ID', '') and getattr(settings, 'AWS_SECRET_ACCESS_KEY', '') and getattr(settings, 'AWS_STORAGE_BUCKET_NAME', ''):
+                import boto3
+                s3_key = f"media/videos/{c_id_folder}/{safe_name}"
+                region = getattr(settings, 'AWS_S3_REGION_NAME', 'ap-south-1') or 'ap-south-1'
+                s3_client = boto3.client(
+                    's3',
+                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                    region_name=region
+                )
+                content_type = file.content_type or 'video/mp4'
+                s3_client.upload_fileobj(
+                    file,
+                    settings.AWS_STORAGE_BUCKET_NAME,
+                    s3_key,
+                    ExtraArgs={'ContentType': content_type}
+                )
+                video_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.{region}.amazonaws.com/{s3_key}"
             else:
-                video_url = f"{request.scheme}://{request.get_host()}{storage_url}"
+                from django.core.files.storage import default_storage
+                saved_path = default_storage.save(f"videos/{c_id_folder}/{safe_name}", file)
+                storage_url = default_storage.url(saved_path)
+                if storage_url.startswith('http://') or storage_url.startswith('https://'):
+                    video_url = storage_url
+                else:
+                    video_url = f"{request.scheme}://{request.get_host()}{storage_url}"
+
 
 
             # Create lecture
