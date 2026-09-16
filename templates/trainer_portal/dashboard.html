@@ -1090,15 +1090,21 @@
       </div>
 
       <div class="modal-body" style="padding: 24px;">
-        <!-- Batch & Trainer Selector Toolbar -->
+        <!-- Batch & Trainer & Category Selector Toolbar -->
         <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:14px; background:#F8FAFC; padding:16px; border-radius:12px; border:1px solid var(--border); margin-bottom: 24px;">
-          <div id="studio-trainer-select-group" style="display:flex; align-items:center; gap:8px; flex:1; min-width:220px;">
-            <label style="font-weight:800; font-size:13px; white-space:nowrap;">👨‍🏫 Select Trainer:</label>
-            <select id="studio-trainer-select" class="form-control" style="font-weight:700;" onchange="onStudioTrainerFilter(this.value)">
+          <div id="studio-trainer-select-group" style="display:flex; align-items:center; gap:8px; flex:1; min-width:200px;">
+            <label style="font-weight:800; font-size:13px; white-space:nowrap;">👨‍🏫 Trainer:</label>
+            <select id="studio-trainer-select" class="form-control" style="font-weight:700;" onchange="filterStudioBatches()">
               <option value="ALL">🌟 All Trainers</option>
             </select>
           </div>
-          <div style="display:flex; align-items:center; gap:8px; flex:1.2; min-width:260px;">
+          <div id="studio-category-select-group" style="display:flex; align-items:center; gap:8px; flex:1; min-width:180px;">
+            <label style="font-weight:800; font-size:13px; white-space:nowrap;">🏷️ Category:</label>
+            <select id="studio-category-select" class="form-control" style="font-weight:700;" onchange="filterStudioBatches()">
+              <option value="ALL">🌟 All Categories</option>
+            </select>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex:1.2; min-width:240px;">
             <label style="font-weight:800; font-size:13px; white-space:nowrap;">🎯 Select Batch:</label>
             <select id="studio-batch-select" class="form-control" style="font-weight:700;" onchange="onStudioBatchSelect(this.value)">
               <option value="">-- Choose Batch --</option>
@@ -1589,6 +1595,43 @@
           <div style="display:flex; justify-content:flex-end; gap:10px;">
             <button type="button" class="btn-header" style="background:#E2E8F0; color:#333;" onclick="closeModal('modal-trainer-permissions')">Cancel</button>
             <button type="submit" id="btn-save-trainer-perms" class="btn-primary" style="padding:10px 22px;">💾 Save Permissions</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: Admin Reset User Password ── -->
+  <div class="modal-overlay" id="modal-reset-user-password">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%); color:white;">
+        <h3 class="modal-title" style="color:white; display:flex; align-items:center; gap:8px;">
+          🔑 Change Password
+        </h3>
+        <button class="btn-close-modal" style="color:white;" onclick="closeModal('modal-reset-user-password')">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <form id="form-reset-user-password" onsubmit="handleSaveUserPassword(event)">
+          <input type="hidden" id="reset-pwd-user-id">
+          
+          <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:18px;">
+            <div style="font-size:13px; color:var(--text-muted);">Changing Password For:</div>
+            <div style="font-size:16px; font-weight:800; color:var(--text-main); margin-top:2px;" id="reset-pwd-user-name">--</div>
+            <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+              <span style="font-size:12px; color:#64748B;" id="reset-pwd-user-email">--</span>
+              <span class="badge badge-blue" id="reset-pwd-user-role">Student</span>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:18px;">
+            <label class="form-label" style="font-weight:700;">New Password *</label>
+            <input type="text" id="reset-pwd-new-password" class="form-control" placeholder="Enter new password (min 4 chars)" minlength="4" required style="font-weight:600;">
+            <small style="color:#64748B; margin-top:4px; display:block;">Enter a new password. The user will be able to log in with this immediately.</small>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button type="button" class="btn-header" style="background:#E2E8F0; color:#333;" onclick="closeModal('modal-reset-user-password')">Cancel</button>
+            <button type="submit" id="btn-save-user-pwd" class="btn-primary" style="padding:10px 22px;">💾 Save New Password</button>
           </div>
         </form>
       </div>
@@ -2500,8 +2543,11 @@
               <td>${s.email}</td>
               <td>${s.phone||'-'}</td>
               <td><span class="badge badge-blue">Student</span></td>
-              <td>
-                <button onclick="deleteUserAccount(${s.id}, '${(s.name || s.email).replace(/'/g, "\\'")}', 'Student')" style="color:red;border:none;background:none;cursor:pointer;font-weight:bold;">🗑️ Delete</button>
+              <td style="display:flex; gap:6px; align-items:center;">
+                <button type="button" class="btn-header" style="background:#0284C7; color:white; padding:5px 10px; font-size:12px;" onclick="openResetPasswordModal(${s.id}, '${(s.name || s.email).replace(/'/g, "\\'")}', '${(s.email).replace(/'/g, "\\'")}', 'Student')">
+                  🔑 Password
+                </button>
+                <button onclick="deleteUserAccount(${s.id}, '${(s.name || s.email).replace(/'/g, "\\'")}', 'Student')" style="color:red;border:none;background:none;cursor:pointer;font-weight:bold;">🗑️</button>
               </td>
             </tr>`;
           });
@@ -2553,6 +2599,9 @@
                 <button type="button" class="btn-header" style="background:#6366F1; color:white; padding:5px 10px; font-size:12px;" onclick="openTrainerPermissionsModal(${t.id}, '${(t.name || t.email).replace(/'/g, "\\'")}', '${(t.trainer_permissions || '').replace(/'/g, "\\'")}')">
                   ⚙️ Access Rights
                 </button>
+                <button type="button" class="btn-header" style="background:#0284C7; color:white; padding:5px 10px; font-size:12px;" onclick="openResetPasswordModal(${t.id}, '${(t.name || t.email).replace(/'/g, "\\'")}', '${(t.email).replace(/'/g, "\\'")}', 'Trainer')">
+                  🔑 Password
+                </button>
                 <button onclick="deleteUserAccount(${t.id}, '${(t.name || t.email).replace(/'/g, "\\'")}', 'Trainer')" style="color:red;border:none;background:none;cursor:pointer;font-weight:bold;">🗑️</button>
               </td>
             </tr>`;
@@ -2563,6 +2612,43 @@
         el.innerHTML = html;
       } catch {
         el.innerHTML = '<p style="color:red; text-align:center; padding:20px;">Could not load trainers list.</p>';
+      }
+    }
+
+    function openResetPasswordModal(userId, userName, userEmail, userRole) {
+      document.getElementById('reset-pwd-user-id').value = userId;
+      document.getElementById('reset-pwd-user-name').textContent = userName || userEmail;
+      document.getElementById('reset-pwd-user-email').textContent = userEmail;
+      document.getElementById('reset-pwd-user-role').textContent = userRole;
+      document.getElementById('reset-pwd-new-password').value = '';
+      openModal('modal-reset-user-password');
+    }
+
+    async function handleSaveUserPassword(e) {
+      e.preventDefault();
+      const userId = document.getElementById('reset-pwd-user-id').value;
+      const userName = document.getElementById('reset-pwd-user-name').textContent;
+      const newPassword = document.getElementById('reset-pwd-new-password').value.trim();
+      const btn = document.getElementById('btn-save-user-pwd');
+
+      if (!newPassword || newPassword.length < 4) {
+        showToast('Password must be at least 4 characters!', 'error');
+        return;
+      }
+
+      if (btn) btn.disabled = true;
+
+      try {
+        await api.post(`/api/user/${userId}/password/`, {
+          password: newPassword
+        });
+        showToast(`✅ Password for "${userName}" changed successfully!`, 'success');
+        closeModal('modal-reset-user-password');
+      } catch (err) {
+        const msg = err.response?.data?.message || 'Error changing password.';
+        showToast(`❌ ${msg}`, 'error');
+      } finally {
+        if (btn) btn.disabled = false;
       }
     }
 
@@ -3294,8 +3380,27 @@
       }
     }
 
-    function onStudioTrainerFilter(selectedTrainer) {
+    function populateStudioCategoryDropdown() {
+      const catSel = document.getElementById('studio-category-select');
+      if (!catSel) return;
+      const currentVal = catSel.value || 'ALL';
+      const catSet = new Set();
+      (allBatches || []).forEach(b => {
+        if (b.category && b.category.trim()) catSet.add(b.category.trim());
+      });
+      catSel.innerHTML = '<option value="ALL">🌟 All Categories</option>';
+      Array.from(catSet).sort().forEach(cat => {
+        catSel.innerHTML += `<option value="${cat}">🏷️ ${cat}</option>`;
+      });
+      if (currentVal && (currentVal === 'ALL' || catSet.has(currentVal))) {
+        catSel.value = currentVal;
+      }
+    }
+
+    function filterStudioBatches() {
       const sel = document.getElementById('studio-batch-select');
+      const studioTrainerSel = document.getElementById('studio-trainer-select');
+      const studioCategorySel = document.getElementById('studio-category-select');
       if (!sel) return;
 
       const loggedUser = JSON.parse(localStorage.getItem('lmt_django_admin_user') || '{}');
@@ -3303,19 +3408,24 @@
       const userName = (loggedUser.name || '').trim();
       const isAdmin = role === 'admin' || loggedUser.is_staff === true;
 
-      const batches = allBatches || [];
-      let filtered = batches;
-      
-      // If trainer, always filter strictly by trainer's name
-      if (!isAdmin && userName) {
-        selectedTrainer = userName;
-      }
+      const selectedTrainer = (!isAdmin && userName) ? userName : (studioTrainerSel ? studioTrainerSel.value : 'ALL');
+      const selectedCategory = studioCategorySel ? studioCategorySel.value : 'ALL';
+
+      let filtered = allBatches || [];
 
       if (selectedTrainer && selectedTrainer !== 'ALL') {
         const st = selectedTrainer.trim().toLowerCase();
-        filtered = batches.filter(b => {
+        filtered = filtered.filter(b => {
           const tName = ((b.instructor && b.instructor.name) || b.instructor_name || '').trim().toLowerCase();
           return tName === st || (tName && st && (tName.includes(st) || st.includes(tName)));
+        });
+      }
+
+      if (selectedCategory && selectedCategory !== 'ALL') {
+        const sc = selectedCategory.trim().toLowerCase();
+        filtered = filtered.filter(b => {
+          const bCat = (b.category || '').trim().toLowerCase();
+          return bCat === sc || bCat.includes(sc);
         });
       }
 
@@ -3328,34 +3438,19 @@
         sel.selectedIndex = 1;
         onStudioBatchSelect(sel.value);
       } else {
-        // If admin and trainer has no batch, show all other batches
-        if (isAdmin && batches.length > 0) {
-          sel.innerHTML += `<option value="" disabled style="color:#E11D48; font-weight:bold;">⚠️ No batches directly assigned to "${selectedTrainer}"</option>`;
-          sel.innerHTML += `<optgroup label="🌟 All Other Available Batches">`;
-          batches.forEach(b => {
-            const tLabel = (b.instructor && b.instructor.name) || b.instructor_name || 'No Trainer';
-            sel.innerHTML += `<option value="${b._id || b.id}">🎯 ${b.name} (${tLabel} - ${b.category || 'General'})</option>`;
-          });
-          sel.innerHTML += `</optgroup>`;
-          const firstOpt = sel.querySelector('optgroup option');
-          if (firstOpt) {
-            sel.value = firstOpt.value;
-            onStudioBatchSelect(firstOpt.value);
-          }
-        } else {
-          onStudioBatchSelect('');
-          const vContainer = document.getElementById('studio-videos-accordion-container');
-          if (vContainer) {
-            const msg = (!isAdmin && userName) 
-              ? `No batches assigned to you (${userName}) yet.` 
-              : `No batches found for trainer "${selectedTrainer}".`;
-            vContainer.innerHTML = `<div style="text-align:center; padding:40px; color:#888;">
-              <p style="font-size:15px; font-weight:700;">${msg}</p>
-              <p style="font-size:13px; margin-top:6px;">Click "+ Create New Batch" above to create your batch.</p>
-            </div>`;
-          }
+        onStudioBatchSelect('');
+        const vContainer = document.getElementById('studio-videos-accordion-container');
+        if (vContainer) {
+          vContainer.innerHTML = `<div style="text-align:center; padding:40px; color:#888;">
+            <p style="font-size:15px; font-weight:700;">No batches found matching selected filters.</p>
+            <p style="font-size:13px; margin-top:6px;">Click "+ Create New Batch" above to add a batch in this category.</p>
+          </div>`;
         }
       }
+    }
+
+    function onStudioTrainerFilter(selectedTrainer) {
+      filterStudioBatches();
     }
 
     async function openBatchStudioModal(batchId = null) {
@@ -3374,10 +3469,8 @@
       }
 
       await loadTrainerDropdowns();
-
-      const studioTrainerSel = document.getElementById('studio-trainer-select');
-      const selectedTrainer = (!isAdmin && userName) ? userName : (studioTrainerSel ? studioTrainerSel.value : 'ALL');
-      onStudioTrainerFilter(selectedTrainer);
+      populateStudioCategoryDropdown();
+      filterStudioBatches();
 
       if (batchId) {
         const sel = document.getElementById('studio-batch-select');

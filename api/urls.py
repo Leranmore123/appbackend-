@@ -56,6 +56,7 @@ urlpatterns = [
     path('user/all/', views.UserListView.as_view(), name='user-list'),
     path('user/<int:pk>/role/', views.UserRoleUpdateView.as_view(), name='user-role'),
     path('user/<int:pk>/permissions/', views.UserPermissionsUpdateView.as_view(), name='user-permissions'),
+    path('user/<int:pk>/password/', views.UserPasswordResetView.as_view(), name='user-password-reset'),
     path('user/<int:pk>/delete/', views.UserDeleteView.as_view(), name='user-delete'),
     path('progress/me/', views.MyCourseProgressView.as_view(), name='my-progress'),
 

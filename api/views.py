@@ -876,6 +876,29 @@ class UserPermissionsUpdateView(APIView):
         return Response(UserProfileSerializer(user).data)
 
 
+class UserPasswordResetView(APIView):
+    permission_classes = [IsAdmin]
+
+    def post(self, request, pk):
+        if not (request.user.is_superuser or getattr(request.user, 'role', '') == 'admin'):
+            return Response({'message': 'Admin permission required'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        new_password = (request.data.get('password') or '').strip()
+        if not new_password:
+            return Response({'message': 'Password cannot be empty'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(new_password) < 4:
+            return Response({'message': 'Password must be at least 4 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+        return Response({'message': f'Password for {user.name or user.email} updated successfully!'}, status=status.HTTP_200_OK)
+
+
 class UserDeleteView(APIView):
     permission_classes = [IsAdmin]
 
