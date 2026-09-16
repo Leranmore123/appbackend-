@@ -853,11 +853,11 @@
         <span class="control-sub">Quick Lecture Entry</span>
       </div>
 
-      <!-- 15. Add Admin / Trainer -->
+      <!-- 15. Add User / Trainer / Student -->
       <div class="control-card" onclick="openModal('modal-add-admin')">
         <div class="control-icon" style="background: rgba(244, 67, 54, 0.15); color: #F44336;">👤</div>
-        <span class="control-label">Add Admin</span>
-        <span class="control-sub">Register New Trainer</span>
+        <span class="control-label">Add User Account</span>
+        <span class="control-sub">Student, Trainer or Admin</span>
       </div>
     </div>
   </main>
@@ -1466,22 +1466,22 @@
     </div>
   </div>
 
-  <!-- ── MODAL: 9. Add Admin / Trainer ── -->
+  <!-- ── MODAL: 9. Add User Account ── -->
   <div class="modal-overlay" id="modal-add-admin">
     <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
-        <h3 class="modal-title">👤 Register New Admin / Trainer</h3>
+        <h3 class="modal-title">👤 Register New User Account</h3>
         <button class="btn-close-modal" onclick="closeModal('modal-add-admin')">✕</button>
       </div>
       <div class="modal-body">
         <form id="form-add-admin" onsubmit="handleCreateAdmin(event)">
           <div class="form-group">
             <label class="form-label">Full Name *</label>
-            <input type="text" id="admin-name" class="form-control" placeholder="Trainer Name" required>
+            <input type="text" id="admin-name" class="form-control" placeholder="User Full Name" required>
           </div>
           <div class="form-group">
-            <label class="form-label">Email Address *</label>
-            <input type="email" id="admin-email" class="form-control" placeholder="trainer@example.com" required>
+            <label class="form-label">Email Address (Google Mail) *</label>
+            <input type="email" id="admin-email" class="form-control" placeholder="student@gmail.com or trainer@example.com" required>
           </div>
           <div class="form-group">
             <label class="form-label">Phone Number *</label>
@@ -1490,8 +1490,9 @@
           <div class="form-group">
             <label class="form-label">Role / Account Type *</label>
             <select id="admin-role" class="form-control" required>
+              <option value="student">🧑‍🎓 Student (Mobile App Access)</option>
               <option value="trainer" selected>👨‍🏫 Trainer / Faculty</option>
-              <option value="admin">👑 Administrator (Full Access)</option>
+              <option value="admin">👑 Administrator (Full Portal Access)</option>
             </select>
           </div>
           <div class="form-group">
@@ -2399,11 +2400,15 @@
         await api.post(API_ENDPOINTS.REGISTER_ADMIN, {
           name, email, phone, password, role
         });
-        showToast(`✅ ${role === 'admin' ? 'Admin' : 'Trainer'} "${name}" registered successfully!`, 'success');
+        const roleLabel = role === 'admin' ? 'Admin' : (role === 'trainer' ? 'Trainer' : 'Student');
+        showToast(`✅ ${roleLabel} "${name}" registered successfully!`, 'success');
         document.getElementById('form-add-admin').reset();
         closeModal('modal-add-admin');
         await loadTrainerDropdowns();
         fetchStats();
+        if (role === 'student') {
+          loadStudentsTable();
+        }
       } catch (err) {
         let msg = 'Error creating admin.';
         if (err.response && err.response.data) {
