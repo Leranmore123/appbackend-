@@ -1727,6 +1727,7 @@
       await fetchStats();
       await loadCoursesDropdowns();
       await loadCategoryDropdowns();
+      await loadTrainerDropdowns();
     }
 
     async function loadCategoryDropdowns() {
@@ -2588,7 +2589,7 @@
 
     async function loadTrainerDropdowns() {
       const batchTrainerSel = document.getElementById('new-batch-trainer');
-      const studioTrainerSel = document.getElementById('studio-trainer-filter');
+      const studioTrainerSel = document.getElementById('studio-trainer-select') || document.getElementById('studio-trainer-filter');
       const trainersSet = new Set();
 
       // Add logged in user
