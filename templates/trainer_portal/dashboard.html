@@ -737,10 +737,10 @@
       <button class="btn-header" style="background: #1A1A2E;" onclick="fetchStats()">🔄 Refresh Data</button>
     </div>
 
-    <!-- ── 15 Control Cards (Same as App) ── -->
-    <div class="controls-grid">
-            <!-- 0. Batch Studio (Direct Batch Dashboard) -->
-      <div class="control-card" onclick="openBatchStudioModal()" style="border: 2px solid #6366F1; background: linear-gradient(135deg, #FFFFFF 0%, #EEF2FF 100%);">
+    <!-- ── 15+ Control Cards with Role-Based Access Control ── -->
+    <div class="controls-grid" id="dashboard-controls-grid">
+      <!-- 0. Batch Studio (Direct Batch Dashboard) -->
+      <div class="control-card" id="card-batch-studio" data-roles="admin,trainer,faculty" onclick="openBatchStudioModal()" style="border: 2px solid #6366F1; background: linear-gradient(135deg, #FFFFFF 0%, #EEF2FF 100%);">
         <span class="highlight-badge" style="background:#6366F1;">🎯 Batch Studio</span>
         <div class="control-icon" style="background: rgba(99, 102, 241, 0.15); color: #6366F1;">🎯</div>
         <span class="control-label">Batch Dashboard</span>
@@ -748,120 +748,120 @@
       </div>
 
       <!-- 1. Upload Video -->
-      <div class="control-card" onclick="openModal('modal-upload-video')" style="border: 2px solid var(--primary);">
+      <div class="control-card" id="card-upload-video" data-roles="admin,trainer,faculty" onclick="openModal('modal-upload-video')" style="border: 2px solid var(--primary);">
         <span class="highlight-badge">Trainer Main</span>
         <div class="control-icon" style="background: rgba(233, 30, 99, 0.15); color: #E91E63;">☁️</div>
         <span class="control-label">Upload Video</span>
         <span class="control-sub">Drag & Drop MP4 or YouTube</span>
       </div>
 
-      <!-- 2. Manage Courses -->
-      <div class="control-card" onclick="openModal('modal-manage-courses')">
+      <!-- 2. Manage Courses (Admin only) -->
+      <div class="control-card" id="card-manage-courses" data-roles="admin" onclick="openModal('modal-manage-courses')">
         <div class="control-icon" style="background: rgba(255, 107, 53, 0.15); color: #FF6B35;">📚</div>
         <span class="control-label">Manage Courses</span>
         <span class="control-sub">Create & Edit Courses</span>
       </div>
 
-      <!-- 3. Manage Batches -->
-      <div class="control-card" onclick="openModal('modal-manage-batches')">
+      <!-- 3. Manage Batches (Admin & Trainer) -->
+      <div class="control-card" id="card-manage-batches" data-roles="admin,trainer,faculty" onclick="openModal('modal-manage-batches')">
         <div class="control-icon" style="background: rgba(76, 175, 80, 0.15); color: #4CAF50;">👥</div>
         <span class="control-label">Manage Batches</span>
         <span class="control-sub">Live & Offline Batches</span>
       </div>
 
-      <!-- 4. Manage Students -->
-      <div class="control-card" onclick="openModal('modal-manage-students')">
+      <!-- 4. Manage Students (Admin only) -->
+      <div class="control-card" id="card-manage-students" data-roles="admin" onclick="openModal('modal-manage-students')">
         <div class="control-icon" style="background: rgba(33, 150, 243, 0.15); color: #2196F3;">🧑‍🎓</div>
         <span class="control-label">Manage Students</span>
         <span class="control-sub">Student Roster & Accounts</span>
       </div>
 
-      <!-- 4b. Manage Trainers -->
-      <div class="control-card" onclick="openModal('modal-manage-trainers')">
+      <!-- 4b. Manage Trainers (Admin only) -->
+      <div class="control-card" id="card-manage-trainers" data-roles="admin" onclick="openModal('modal-manage-trainers')">
         <div class="control-icon" style="background: rgba(99, 102, 241, 0.15); color: #6366F1;">👨‍🏫</div>
         <span class="control-label">Manage Trainers</span>
         <span class="control-sub">Faculty & Trainer Roster</span>
       </div>
 
-      <!-- 5. Categories -->
-      <div class="control-card" onclick="openModal('modal-categories')">
+      <!-- 5. Categories (Admin only) -->
+      <div class="control-card" id="card-categories" data-roles="admin" onclick="openModal('modal-categories')">
         <div class="control-icon" style="background: rgba(233, 30, 99, 0.15); color: #E91E63;">🏷️</div>
         <span class="control-label">Categories</span>
         <span class="control-sub">Organize Course Types</span>
       </div>
 
       <!-- Course Sections / Chapters -->
-      <div class="control-card" onclick="openModal('modal-sections')">
+      <div class="control-card" id="card-sections" data-roles="admin,trainer,faculty" onclick="openModal('modal-sections')">
         <div class="control-icon" style="background: rgba(76, 175, 80, 0.15); color: #4CAF50;">📁</div>
         <span class="control-label">Course Sections</span>
         <span class="control-sub">Create Chapters & Modules</span>
       </div>
 
       <!-- 6. Schedule / Timetable -->
-      <div class="control-card" onclick="openModal('modal-schedule')">
+      <div class="control-card" id="card-schedule" data-roles="admin,trainer,faculty" onclick="openModal('modal-schedule')">
         <div class="control-icon" style="background: rgba(0, 188, 212, 0.15); color: #00BCD4;">📅</div>
         <span class="control-label">Schedule/Timetable</span>
         <span class="control-sub">Zoom & Live Classes</span>
       </div>
 
       <!-- 7. Assignments -->
-      <div class="control-card" onclick="openModal('modal-assignments')">
+      <div class="control-card" id="card-assignments" data-roles="admin,trainer,faculty" onclick="openModal('modal-assignments')">
         <div class="control-icon" style="background: rgba(255, 152, 0, 0.15); color: #FF9800;">📝</div>
         <span class="control-label">Assignments</span>
         <span class="control-sub">Create Tasks & Marks</span>
       </div>
 
       <!-- 8. Attendance -->
-      <div class="control-card" onclick="openModal('modal-attendance')">
+      <div class="control-card" id="card-attendance" data-roles="admin,trainer,faculty" onclick="openModal('modal-attendance')">
         <div class="control-icon" style="background: rgba(0, 188, 212, 0.15); color: #00BCD4;">📊</div>
         <span class="control-label">Attendance</span>
         <span class="control-sub">Mark Student Presence</span>
       </div>
 
       <!-- 9. Send Notification -->
-      <div class="control-card" onclick="openModal('modal-notification')">
+      <div class="control-card" id="card-notification" data-roles="admin,trainer,faculty" onclick="openModal('modal-notification')">
         <div class="control-icon" style="background: rgba(255, 87, 34, 0.15); color: #FF5722;">🔔</div>
         <span class="control-label">Send Notification</span>
         <span class="control-sub">Broadcast to App</span>
       </div>
 
-      <!-- 10. Payments -->
-      <div class="control-card" onclick="openModal('modal-payments')">
+      <!-- 10. Payments (Admin only) -->
+      <div class="control-card" id="card-payments" data-roles="admin" onclick="openModal('modal-payments')">
         <div class="control-icon" style="background: rgba(96, 125, 139, 0.15); color: #607D8B;">💳</div>
         <span class="control-label">Payments</span>
         <span class="control-sub">Fee Receipts & Logs</span>
       </div>
 
       <!-- 11. Doubts (Q&A) -->
-      <div class="control-card" onclick="openModal('modal-doubts')">
+      <div class="control-card" id="card-doubts" data-roles="admin,trainer,faculty" onclick="openModal('modal-doubts')">
         <div class="control-icon" style="background: rgba(121, 85, 72, 0.15); color: #795548;">💬</div>
         <span class="control-label">Doubts (Q&A)</span>
         <span class="control-sub">Student Questions & Reply</span>
       </div>
 
       <!-- 12. Manage Quizzes -->
-      <div class="control-card" onclick="openModal('modal-quizzes')">
+      <div class="control-card" id="card-quizzes" data-roles="admin,trainer,faculty" onclick="openModal('modal-quizzes')">
         <div class="control-icon" style="background: rgba(103, 58, 183, 0.15); color: #673AB7;">❓</div>
         <span class="control-label">Manage Quizzes</span>
         <span class="control-sub">Create Online Tests</span>
       </div>
 
       <!-- 13. Coding Questions -->
-      <div class="control-card" onclick="openModal('modal-coding')">
+      <div class="control-card" id="card-coding" data-roles="admin,trainer,faculty" onclick="openModal('modal-coding')">
         <div class="control-icon" style="background: rgba(0, 188, 212, 0.15); color: #00BCD4;">💻</div>
         <span class="control-label">Coding Questions</span>
         <span class="control-sub">Code Challenges</span>
       </div>
 
       <!-- 14. Add Lectures (Quick) -->
-      <div class="control-card" onclick="openModal('modal-upload-video')">
+      <div class="control-card" id="card-add-lectures" data-roles="admin,trainer,faculty" onclick="openModal('modal-upload-video')">
         <div class="control-icon" style="background: rgba(156, 39, 176, 0.15); color: #9C27B0;">📹</div>
         <span class="control-label">Add Lectures</span>
         <span class="control-sub">Quick Lecture Entry</span>
       </div>
 
-      <!-- 15. Add User / Trainer / Student -->
-      <div class="control-card" onclick="openModal('modal-add-admin')">
+      <!-- 15. Add User / Trainer / Student (Admin only) -->
+      <div class="control-card" id="card-add-admin" data-roles="admin" onclick="openModal('modal-add-admin')">
         <div class="control-icon" style="background: rgba(244, 67, 54, 0.15); color: #F44336;">👤</div>
         <span class="control-label">Add User Account</span>
         <span class="control-sub">Student, Trainer or Admin</span>
@@ -1092,7 +1092,7 @@
       <div class="modal-body" style="padding: 24px;">
         <!-- Batch & Trainer Selector Toolbar -->
         <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:14px; background:#F8FAFC; padding:16px; border-radius:12px; border:1px solid var(--border); margin-bottom: 24px;">
-          <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:220px;">
+          <div id="studio-trainer-select-group" style="display:flex; align-items:center; gap:8px; flex:1; min-width:220px;">
             <label style="font-weight:800; font-size:13px; white-space:nowrap;">👨‍🏫 Select Trainer:</label>
             <select id="studio-trainer-select" class="form-control" style="font-weight:700;" onchange="onStudioTrainerFilter(this.value)">
               <option value="ALL">🌟 All Trainers</option>
@@ -1801,6 +1801,61 @@
       }
     });
 
+    function applyRolePermissions() {
+      const user = JSON.parse(localStorage.getItem('lmt_django_admin_user') || '{}');
+      const role = (user.role || 'admin').toLowerCase();
+      const userName = (user.name || '').trim();
+      const isAdmin = role === 'admin' || user.is_staff === true;
+
+      // Update header labels & greeting
+      const nameEl = document.getElementById('header-admin-name');
+      const badgeEl = document.querySelector('.admin-badge');
+      if (nameEl) {
+        nameEl.textContent = `Hello, ${userName ? userName.split(' ')[0] : (isAdmin ? 'Admin' : 'Trainer')}!`;
+      }
+      if (badgeEl) {
+        badgeEl.textContent = isAdmin ? '👑 ADMIN PORTAL' : '👨‍🏫 TRAINER PORTAL';
+      }
+
+      // Hide revenue stats card for non-admin trainers
+      const revenueCard = document.getElementById('stat-revenue')?.closest('.stat-card');
+      if (revenueCard) {
+        revenueCard.style.display = isAdmin ? 'flex' : 'none';
+      }
+
+      // Filter control cards on dashboard based on data-roles
+      const allCards = document.querySelectorAll('.control-card');
+      allCards.forEach(card => {
+        const roles = (card.getAttribute('data-roles') || 'admin,trainer,faculty').split(',').map(r => r.trim());
+        if (isAdmin || roles.includes('trainer') || roles.includes(role)) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      // Batch Studio trainer selector lockdown for Trainer
+      const studioTrainerGroup = document.getElementById('studio-trainer-select-group');
+      const studioTrainerSel = document.getElementById('studio-trainer-select');
+      if (studioTrainerSel) {
+        if (!isAdmin && userName) {
+          studioTrainerSel.innerHTML = `<option value="${userName}" selected>👨‍🏫 ${userName} (You)</option>`;
+          studioTrainerSel.disabled = true;
+          if (studioTrainerGroup) studioTrainerGroup.style.display = 'none';
+        } else {
+          studioTrainerSel.disabled = false;
+          if (studioTrainerGroup) studioTrainerGroup.style.display = 'flex';
+        }
+      }
+
+      // Create Batch modal trainer lock for Trainer
+      const newBatchTrainerSel = document.getElementById('new-batch-trainer');
+      if (newBatchTrainerSel && !isAdmin && userName) {
+        newBatchTrainerSel.innerHTML = `<option value="${userName}" selected>👨‍🏫 ${userName} (You)</option>`;
+        newBatchTrainerSel.disabled = true;
+      }
+    }
+
     function checkAuth() {
       const token = localStorage.getItem('lmt_django_admin_token');
       const user = JSON.parse(localStorage.getItem('lmt_django_admin_user') || 'null');
@@ -1808,8 +1863,7 @@
         showLoginModal();
         return false;
       }
-      const nameEl = document.getElementById('header-admin-name');
-      if (nameEl) nameEl.textContent = `Hello, ${user.name ? user.name.split(' ')[0] : 'Admin'}!`;
+      applyRolePermissions();
       return true;
     }
 
@@ -1826,10 +1880,11 @@
           if (data.token) {
             localStorage.setItem('lmt_django_admin_token', data.token);
             localStorage.setItem('lmt_django_admin_user', JSON.stringify(data));
-            showToast('✅ Login Successful! Welcome Admin.', 'success');
+            const role = (data.role || 'admin').toLowerCase();
+            const isAdmin = role === 'admin' || data.is_staff === true;
+            showToast(`✅ Login Successful! Welcome ${isAdmin ? 'Admin' : 'Trainer'}.`, 'success');
             hideLoginModal();
-            const nameEl = document.getElementById('header-admin-name');
-            if (nameEl) nameEl.textContent = `Hello, ${data.name ? data.name.split(' ')[0] : 'Admin'}!`;
+            applyRolePermissions();
             initDashboard();
           }
         })
@@ -1867,10 +1922,12 @@
     function hideLoginModal() { document.getElementById('login-modal')?.classList.remove('active'); }
 
     async function initDashboard() {
+      applyRolePermissions();
       await fetchStats();
       await loadCoursesDropdowns();
       await loadCategoryDropdowns();
       await loadTrainerDropdowns();
+      applyRolePermissions();
     }
 
     async function loadCategoryDropdowns() {
@@ -2981,12 +3038,31 @@
       const studioTrainerSel = document.getElementById('studio-trainer-select') || document.getElementById('studio-trainer-filter');
       const trainersSet = new Set();
 
-      // Fetch all registered users to extract real trainers only
+      const loggedUser = JSON.parse(localStorage.getItem('lmt_django_admin_user') || '{}');
+      const role = (loggedUser.role || 'admin').toLowerCase();
+      const userName = (loggedUser.name || '').trim();
+      const isAdmin = role === 'admin' || loggedUser.is_staff === true;
+
+      // 🔒 TRAINER LOCK: If logged in as trainer, lock both dropdowns to their own name
+      if (!isAdmin && userName) {
+        if (batchTrainerSel) {
+          batchTrainerSel.innerHTML = `<option value="${userName}" selected>👨‍🏫 ${userName} (You)</option>`;
+          batchTrainerSel.disabled = true;
+        }
+        if (studioTrainerSel) {
+          studioTrainerSel.innerHTML = `<option value="${userName}" selected>👨‍🏫 ${userName} (You)</option>`;
+          studioTrainerSel.disabled = true;
+          const studioTrainerGroup = document.getElementById('studio-trainer-select-group');
+          if (studioTrainerGroup) studioTrainerGroup.style.display = 'none';
+        }
+        return;
+      }
+
+      // 👑 ADMIN SCOPE: Fetch all registered users to extract real trainers
       try {
         const res = await api.get(API_ENDPOINTS.USER_ALL);
         const users = Array.isArray(res.data) ? res.data : [];
         
-        // Priority 1: explicitly role === 'trainer' or 'faculty'
         const realTrainers = users.filter(u => u.role === 'trainer' || u.role === 'faculty');
         if (realTrainers.length > 0) {
           realTrainers.forEach(u => {
@@ -2994,7 +3070,6 @@
             if (name) trainersSet.add(name);
           });
         } else {
-          // If no trainer registered yet, fallback to admin accounts
           users.filter(u => u.role === 'admin').forEach(u => {
             const name = (u.name || u.email || '').trim();
             if (name) trainersSet.add(name);
@@ -3004,16 +3079,15 @@
         console.log('Error loading users for trainers dropdown:', e);
       }
 
-      // Fallback only if no trainer exists in database yet
-      if (trainersSet.size === 0) {
-        const loggedAdmin = JSON.parse(localStorage.getItem('lmt_django_admin_user') || '{}');
-        if (loggedAdmin.name) trainersSet.add(loggedAdmin.name.trim());
+      if (trainersSet.size === 0 && userName) {
+        trainersSet.add(userName);
       }
 
       allTrainersList = Array.from(trainersSet);
 
       if (batchTrainerSel) {
         const currentVal = batchTrainerSel.value;
+        batchTrainerSel.disabled = false;
         batchTrainerSel.innerHTML = '<option value="">-- Select Trainer --</option>';
         allTrainersList.forEach(t => {
           batchTrainerSel.innerHTML += `<option value="${t}">👨‍🏫 ${t}</option>`;
@@ -3027,6 +3101,10 @@
 
       if (studioTrainerSel) {
         const currentVal = studioTrainerSel.value;
+        studioTrainerSel.disabled = false;
+        const studioTrainerGroup = document.getElementById('studio-trainer-select-group');
+        if (studioTrainerGroup) studioTrainerGroup.style.display = 'flex';
+
         studioTrainerSel.innerHTML = '<option value="ALL">🌟 All Trainers</option>';
         allTrainersList.forEach(t => {
           studioTrainerSel.innerHTML += `<option value="${t}">👨‍🏫 ${t}</option>`;
@@ -3041,9 +3119,19 @@
       const sel = document.getElementById('studio-batch-select');
       if (!sel) return;
 
+      const loggedUser = JSON.parse(localStorage.getItem('lmt_django_admin_user') || '{}');
+      const role = (loggedUser.role || 'admin').toLowerCase();
+      const userName = (loggedUser.name || '').trim();
+      const isAdmin = role === 'admin' || loggedUser.is_staff === true;
+
       const batches = allBatches || [];
       let filtered = batches;
       
+      // If trainer, always filter strictly by trainer's name
+      if (!isAdmin && userName) {
+        selectedTrainer = userName;
+      }
+
       if (selectedTrainer && selectedTrainer !== 'ALL') {
         const st = selectedTrainer.trim().toLowerCase();
         filtered = batches.filter(b => {
@@ -3061,8 +3149,8 @@
         sel.selectedIndex = 1;
         onStudioBatchSelect(sel.value);
       } else {
-        // If this specific trainer has no batch, show all batches with an optgroup so user is never blocked
-        if (batches.length > 0) {
+        // If admin and trainer has no batch, show all other batches
+        if (isAdmin && batches.length > 0) {
           sel.innerHTML += `<option value="" disabled style="color:#E11D48; font-weight:bold;">⚠️ No batches directly assigned to "${selectedTrainer}"</option>`;
           sel.innerHTML += `<optgroup label="🌟 All Other Available Batches">`;
           batches.forEach(b => {
@@ -3070,7 +3158,6 @@
             sel.innerHTML += `<option value="${b._id || b.id}">🎯 ${b.name} (${tLabel} - ${b.category || 'General'})</option>`;
           });
           sel.innerHTML += `</optgroup>`;
-          // Auto-select the first available batch
           const firstOpt = sel.querySelector('optgroup option');
           if (firstOpt) {
             sel.value = firstOpt.value;
@@ -3080,9 +3167,12 @@
           onStudioBatchSelect('');
           const vContainer = document.getElementById('studio-videos-accordion-container');
           if (vContainer) {
+            const msg = (!isAdmin && userName) 
+              ? `No batches assigned to you (${userName}) yet.` 
+              : `No batches found for trainer "${selectedTrainer}".`;
             vContainer.innerHTML = `<div style="text-align:center; padding:40px; color:#888;">
-              <p style="font-size:15px; font-weight:700;">No batches created yet in the database.</p>
-              <p style="font-size:13px; margin-top:6px;">Click "+ Create New Batch" above to create your first batch.</p>
+              <p style="font-size:15px; font-weight:700;">${msg}</p>
+              <p style="font-size:13px; margin-top:6px;">Click "+ Create New Batch" above to create your batch.</p>
             </div>`;
           }
         }
@@ -3092,6 +3182,11 @@
     async function openBatchStudioModal(batchId = null) {
       document.getElementById('modal-batch-studio')?.classList.add('active');
       
+      const loggedUser = JSON.parse(localStorage.getItem('lmt_django_admin_user') || '{}');
+      const role = (loggedUser.role || 'admin').toLowerCase();
+      const userName = (loggedUser.name || '').trim();
+      const isAdmin = role === 'admin' || loggedUser.is_staff === true;
+
       try {
         const res = await api.get(API_ENDPOINTS.BATCHES);
         allBatches = Array.isArray(res.data) ? res.data : [];
@@ -3102,11 +3197,7 @@
       await loadTrainerDropdowns();
 
       const studioTrainerSel = document.getElementById('studio-trainer-select');
-      // Default to ALL trainers to show all batches by default
-      if (studioTrainerSel && !batchId && studioTrainerSel.value !== 'ALL') {
-        // Keep current value if user chose it, else default to ALL
-      }
-      const selectedTrainer = studioTrainerSel ? studioTrainerSel.value : 'ALL';
+      const selectedTrainer = (!isAdmin && userName) ? userName : (studioTrainerSel ? studioTrainerSel.value : 'ALL');
       onStudioTrainerFilter(selectedTrainer);
 
       if (batchId) {

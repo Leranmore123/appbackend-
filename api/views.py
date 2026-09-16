@@ -496,26 +496,47 @@ class BatchListView(APIView):
         
         qs = Batch.objects.filter(is_active=True)
 
-        # For student: show ONLY batches where they are enrolled or their email is in allowed_emails
-        if request.user.is_authenticated and not (request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'trainer', 'faculty')):
-            sync_user_batch_enrollments(request.user)
-            enrolled_ids = BatchEnrollment.objects.filter(user=request.user).values_list('batch_id', flat=True)
-            user_email = (getattr(request.user, 'email', '') or '').strip().lower()
+        user_role = getattr(request.user, 'role', '') if (request.user and request.user.is_authenticated) else ''
+        user_name = getattr(request.user, 'name', '') if (request.user and request.user.is_authenticated) else ''
+        is_admin_user = (request.user and request.user.is_authenticated) and (request.user.is_superuser or user_role == 'admin')
 
-            qs = qs.filter(
-                models.Q(id__in=enrolled_ids) |
-                (models.Q(allowed_emails__icontains=user_email) if user_email else models.Q(pk__in=[]))
-            ).distinct()
+        if request.user and request.user.is_authenticated:
+            if user_role in ('trainer', 'faculty') and not is_admin_user:
+                # 🔒 TRAINER SCOPE: Trainer only sees batches assigned to them
+                qs = qs.filter(
+                    models.Q(instructor_name__iexact=user_name) |
+                    models.Q(instructor_name__icontains=user_name)
+                )
+            elif not (request.user.is_staff or is_admin_user):
+                # 🔒 STUDENT SCOPE: Student only sees enrolled or allowed batches
+                sync_user_batch_enrollments(request.user)
+                enrolled_ids = BatchEnrollment.objects.filter(user=request.user).values_list('batch_id', flat=True)
+                user_email = (getattr(request.user, 'email', '') or '').strip().lower()
+
+                qs = qs.filter(
+                    models.Q(id__in=enrolled_ids) |
+                    (models.Q(allowed_emails__icontains=user_email) if user_email else models.Q(pk__in=[]))
+                ).distinct()
 
         if category and category != 'All':
             qs = qs.filter(category=category)
-        if trainer and trainer != 'ALL':
+        if trainer and trainer != 'ALL' and is_admin_user:
             qs = qs.filter(instructor_name__iexact=trainer)
 
         return Response(BatchSerializer(qs, many=True, context={'request': request}).data)
 
     def post(self, request):
-        serializer = BatchSerializer(data=request.data, context={'request': request})
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        user_role = getattr(request.user, 'role', '') if (request.user and request.user.is_authenticated) else ''
+        user_name = getattr(request.user, 'name', '') if (request.user and request.user.is_authenticated) else ''
+        is_admin_user = (request.user and request.user.is_authenticated) and (request.user.is_superuser or user_role == 'admin')
+
+        # 🔒 Lock assigned trainer to current trainer if not admin
+        if user_role in ('trainer', 'faculty') and user_name and not is_admin_user:
+            data['instructor_name'] = user_name
+            data['instructor'] = {'name': user_name}
+
+        serializer = BatchSerializer(data=data, context={'request': request})
         if serializer.is_valid():
             batch = serializer.save()
             auto_populate_batch_sections(batch)
