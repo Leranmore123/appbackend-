@@ -1235,6 +1235,107 @@
     </div>
   </div>
 
+  <!-- ── MODAL: Dedicated Batch Video Upload ── -->
+  <div class="modal-overlay" id="modal-batch-upload-video">
+    <div class="modal-content" style="max-width: 680px; width: 95%;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C00 100%); color:white;">
+        <div>
+          <h3 class="modal-title" style="color:white; display:flex; align-items:center; gap:8px;">
+            ☁️ Upload Video to Batch
+          </h3>
+          <div style="font-size:13px; color:white; opacity:0.95; margin-top:4px;">
+            🎯 Batch: <strong id="batch-upload-batch-label">...</strong> | 📁 Section: <strong id="batch-upload-section-label">...</strong>
+          </div>
+        </div>
+        <button class="btn-close-modal" style="color:white;" onclick="closeModal('modal-batch-upload-video')">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 24px;">
+        <div class="mode-switcher" style="margin-bottom:20px;">
+          <button type="button" class="mode-btn active" id="btn-batch-mode-youtube" onclick="setBatchUploadMode('youtube')">
+            🔗 YouTube / Web Video Link (Instant)
+          </button>
+          <button type="button" class="mode-btn" id="btn-batch-mode-file" onclick="setBatchUploadMode('file')">
+            📁 Drag & Drop Video File (Laptop)
+          </button>
+        </div>
+
+        <form id="form-batch-upload" onsubmit="handleBatchDedicatedUploadSubmit(event)">
+          <input type="hidden" id="batch-upload-batch-id">
+          <input type="hidden" id="batch-upload-section-id">
+
+          <!-- Section Select (in case trainer wants to change section) -->
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label" style="font-weight:700;">Target Section / Chapter *</label>
+            <select id="batch-upload-section-select" class="form-control" required></select>
+          </div>
+
+          <!-- YouTube / URL Mode -->
+          <div id="batch-upload-youtube-box">
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="form-label" style="font-weight:700;">YouTube Video Link / Web MP4 URL *</label>
+              <input type="url" id="batch-upload-video-url" class="form-control" placeholder="https://www.youtube.com/watch?v=... or direct MP4 link">
+              <small style="color:#64748B; margin-top:4px; display:block;">⚡ YouTube links load instantly with zero buffering on student phones.</small>
+            </div>
+          </div>
+
+          <!-- File Upload Mode -->
+          <div id="batch-upload-file-box" style="display:none;">
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="form-label" style="font-weight:700;">Upload Video File (MP4, WebM, MOV) *</label>
+              <div id="batch-video-dropzone" class="dropzone" style="border: 2px dashed var(--primary); border-radius:12px; padding:28px 20px; text-align:center; background:#F8FAFC; cursor:pointer;">
+                <input type="file" id="batch-video-file-input" accept="video/*" style="display:none;">
+                <div style="font-size:36px; margin-bottom:8px;">📹</div>
+                <h5 style="font-weight:700; margin-bottom:4px;">Drag & Drop Video File Here or Browse</h5>
+                <p style="font-size:12px; color:#888;">Supports MP4, MOV, MKV up to 500MB</p>
+              </div>
+              <div id="batch-video-file-preview" style="display:none; margin-top:10px; padding:10px 14px; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; align-items:center; justify-content:space-between;">
+                <div>
+                  <strong id="batch-preview-file-name" style="font-size:13px; color:#1E40AF;"></strong>
+                  <div id="batch-preview-file-meta" style="font-size:11px; color:#6B7280;"></div>
+                </div>
+                <span style="color:#10B981; font-weight:700; font-size:12px;">✅ Ready</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" style="font-weight:700;">Lecture / Video Title *</label>
+              <input type="text" id="batch-upload-title" class="form-control" placeholder="e.g. Class 1: Introduction to Python" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-weight:700;">Duration (e.g. 15:30)</label>
+              <input type="text" id="batch-upload-duration" class="form-control" placeholder="10:00" value="10:00">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:18px;">
+            <label class="form-label" style="font-weight:700;">Publish Status</label>
+            <select id="batch-upload-is-published" class="form-control">
+              <option value="true" selected>🟢 Published (Instantly visible in Mobile App)</option>
+              <option value="false">🟡 Draft (Hidden from students)</option>
+            </select>
+          </div>
+
+          <!-- Upload Progress -->
+          <div id="batch-upload-progress-box" style="display:none; margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-bottom:6px;">
+              <span id="batch-upload-progress-text">Uploading video...</span>
+            </div>
+            <div style="height:8px; background:#E2E8F0; border-radius:4px; overflow:hidden;">
+              <div id="batch-upload-progress-bar" style="height:100%; width:0%; background:var(--primary); transition:width 0.2s;"></div>
+            </div>
+          </div>
+
+          <button type="submit" id="btn-batch-upload-submit" class="btn-primary" style="width:100%; padding:13px; font-size:15px; font-weight:700;">
+            🚀 Upload & Publish Video to Batch
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="modal-manage-batches">
     <div class="modal-content" style="max-width: 850px;">
       <div class="modal-header">
@@ -1694,6 +1795,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       setupDragAndDrop();
+      setupBatchDragAndDrop();
       if (checkAuth()) {
         initDashboard();
       }
@@ -2695,10 +2797,168 @@
     let currentStudioBatchId = null;
 
     
-    async function openBatchVideoUpload(batchId, sectionId = null) {
+    let selectedBatchVideoFile = null;
+
+    function setBatchUploadMode(mode) {
+      const ytBtn = document.getElementById('btn-batch-mode-youtube');
+      const fileBtn = document.getElementById('btn-batch-mode-file');
+      const ytBox = document.getElementById('batch-upload-youtube-box');
+      const fileBox = document.getElementById('batch-upload-file-box');
+      const videoInput = document.getElementById('batch-upload-video-url');
+      if (mode === 'youtube') {
+        ytBtn?.classList.add('active'); fileBtn?.classList.remove('active');
+        if (ytBox) ytBox.style.display = 'block';
+        if (fileBox) fileBox.style.display = 'none';
+        if (videoInput) videoInput.required = true;
+      } else {
+        fileBtn?.classList.add('active'); ytBtn?.classList.remove('active');
+        if (fileBox) fileBox.style.display = 'block';
+        if (ytBox) ytBox.style.display = 'none';
+        if (videoInput) videoInput.required = false;
+      }
+    }
+
+    function setupBatchDragAndDrop() {
+      const dropzone = document.getElementById('batch-video-dropzone');
+      const fileInput = document.getElementById('batch-video-file-input');
+      if (!dropzone || !fileInput) return;
+      dropzone.addEventListener('click', () => fileInput.click());
+      dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+      dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault(); dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files?.[0]) handleSelectedBatchVideoFile(e.dataTransfer.files[0]);
+      });
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files?.[0]) handleSelectedBatchVideoFile(e.target.files[0]);
+      });
+    }
+
+    function handleSelectedBatchVideoFile(file) {
+      if (!file.type.startsWith('video/')) {
+        showToast('⚠️ Please select a valid MP4/MOV video file', 'error'); return;
+      }
+      selectedBatchVideoFile = file;
+      document.getElementById('batch-preview-file-name').textContent = file.name;
+      document.getElementById('batch-preview-file-meta').textContent = `${(file.size / (1024*1024)).toFixed(2)} MB · ${file.type}`;
+      document.getElementById('batch-video-file-preview').style.display = 'flex';
+      const titleInput = document.getElementById('batch-upload-title');
+      if (titleInput && !titleInput.value.trim()) titleInput.value = file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
+    }
+
+    async function openDedicatedBatchUpload(batchId, sectionId = null, sectionTitle = '') {
       if (!batchId) batchId = currentStudioBatchId;
-      openModal('modal-upload-video');
-      await loadUploadVideoModule(`batch_${batchId}`, sectionId);
+      if (!batchId) return;
+
+      const selectedBatch = allBatches.find(b => String(b._id || b.id) === String(batchId));
+      const batchName = selectedBatch ? selectedBatch.name : 'Selected Batch';
+
+      document.getElementById('batch-upload-batch-id').value = batchId;
+      document.getElementById('batch-upload-batch-label').textContent = batchName;
+      document.getElementById('batch-upload-section-label').textContent = sectionTitle || 'Selected Section';
+
+      // Load sections into dropdown
+      const secSel = document.getElementById('batch-upload-section-select');
+      try {
+        const res = await api.get(`${API_BASE}/batches/${batchId}/sections/`);
+        const sections = Array.isArray(res.data) ? res.data : [];
+        if (secSel) {
+          secSel.innerHTML = '';
+          sections.forEach(s => {
+            secSel.innerHTML += `<option value="${s._id || s.id}">📁 ${s.title}</option>`;
+          });
+          if (sectionId) {
+            secSel.value = String(sectionId);
+            const chosen = sections.find(s => String(s._id || s.id) === String(sectionId));
+            if (chosen) {
+              document.getElementById('batch-upload-section-label').textContent = chosen.title;
+              document.getElementById('batch-upload-title').placeholder = `e.g. ${chosen.title} - Class 1`;
+            }
+          }
+        }
+      } catch {}
+
+      setBatchUploadMode('youtube');
+      selectedBatchVideoFile = null;
+      document.getElementById('batch-video-file-preview').style.display = 'none';
+      document.getElementById('batch-upload-progress-box').style.display = 'none';
+      document.getElementById('form-batch-upload')?.reset();
+
+      openModal('modal-batch-upload-video');
+    }
+
+    async function handleBatchDedicatedUploadSubmit(e) {
+      e.preventDefault();
+      const batchId = document.getElementById('batch-upload-batch-id').value;
+      const sectionId = document.getElementById('batch-upload-section-select').value;
+      const title = document.getElementById('batch-upload-title').value.trim();
+      const duration = document.getElementById('batch-upload-duration').value.trim() || '10:00';
+      const isPublished = document.getElementById('batch-upload-is-published').value === 'true';
+      const isYoutube = document.getElementById('btn-batch-mode-youtube')?.classList.contains('active');
+      const youtubeUrl = document.getElementById('batch-upload-video-url')?.value?.trim();
+
+      if (!batchId) { showToast('Batch not selected!', 'error'); return; }
+      if (!title) { showToast('Please enter video title!', 'error'); return; }
+
+      const submitBtn = document.getElementById('btn-batch-upload-submit');
+      const progressBox = document.getElementById('batch-upload-progress-box');
+      const progressBar = document.getElementById('batch-upload-progress-bar');
+      const progressText = document.getElementById('batch-upload-progress-text');
+
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Uploading...'; }
+
+      try {
+        if (isYoutube) {
+          if (!youtubeUrl) { showToast('Please enter video URL!', 'error'); submitBtn.disabled = false; submitBtn.textContent = '🚀 Upload & Publish Video to Batch'; return; }
+          await api.post(API_ENDPOINTS.LECTURES, {
+            title,
+            videoUrl: youtubeUrl,
+            videoType: youtubeUrl.includes('youtube') || youtubeUrl.includes('youtu.be') ? 'youtube' : 'direct',
+            duration,
+            isPublished,
+            batch: batchId,
+            section: sectionId,
+            order: 1
+          });
+          showToast(`✅ Video "${title}" published into batch!`, 'success');
+        } else {
+          if (!selectedBatchVideoFile) { showToast('Please select a video file!', 'error'); submitBtn.disabled = false; submitBtn.textContent = '🚀 Upload & Publish Video to Batch'; return; }
+          const formData = new FormData();
+          formData.append('video', selectedBatchVideoFile);
+          formData.append('title', title);
+          formData.append('duration', duration);
+          formData.append('batchId', batchId);
+          formData.append('sectionId', sectionId);
+          formData.append('isPublished', String(isPublished));
+          formData.append('order', '1');
+
+          if (progressBox) progressBox.style.display = 'block';
+          await api.post(API_ENDPOINTS.UPLOAD_VIDEO(0), formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress: (p) => {
+              if (p.total) {
+                const pct = Math.round((p.loaded * 100) / p.total);
+                if (progressBar) progressBar.style.width = `${pct}%`;
+                if (progressText) progressText.textContent = `Uploading: ${pct}% (${(p.loaded/(1024*1024)).toFixed(1)}MB / ${(p.total/(1024*1024)).toFixed(1)}MB)`;
+              }
+            }
+          });
+          showToast(`✅ Video "${title}" uploaded and published!`, 'success');
+        }
+
+        document.getElementById('form-batch-upload')?.reset();
+        selectedBatchVideoFile = null;
+        closeModal('modal-batch-upload-video');
+        if (currentStudioBatchId) {
+          loadStudioVideosAndSections(currentStudioBatchId);
+        }
+        fetchStats();
+      } catch (err) {
+        showToast('❌ Upload failed. Please try again.', 'error');
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🚀 Upload & Publish Video to Batch'; }
+        if (progressBox) progressBox.style.display = 'none';
+      }
     }
 
     
@@ -2902,14 +3162,14 @@
           </tr>`;
 
           vHtml += `<div style="border:1px solid var(--border); border-radius:12px; margin-bottom:16px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.03); transition:all 0.2s ease;">
-            <div style="background:#F8FAFC; padding:14px 18px; font-weight:800; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E2E8F0; cursor:pointer;" onclick="openBatchVideoUpload('${batchId}', '${sec.id || sec._id}')" title="Click to upload video to this section">
+            <div style="background:#F8FAFC; padding:14px 18px; font-weight:800; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E2E8F0; cursor:pointer;" onclick="openDedicatedBatchUpload('${batchId}', '${sec.id || sec._id}', '${sec.title.replace(/'/g, "\\'")}')" title="Click to upload video to this section">
               <div style="display:flex; align-items:center; gap:10px;">
                 <span style="font-size:18px;">📁</span>
                 <span style="font-size:15px; color:#1E293B;">Section ${sIdx+1}: ${sec.title}</span>
               </div>
               <div style="display:flex; align-items:center; gap:10px;" onclick="event.stopPropagation();">
                 <span class="badge badge-blue">${lecs.length} Video(s)</span>
-                <button type="button" class="btn-primary" style="padding:7px 14px; font-size:12px; border-radius:6px; box-shadow:none;" onclick="openBatchVideoUpload('${batchId}', '${sec.id || sec._id}')">
+                <button type="button" class="btn-primary" style="padding:7px 14px; font-size:12px; border-radius:6px; box-shadow:none;" onclick="openDedicatedBatchUpload('${batchId}', '${sec.id || sec._id}', '${sec.title.replace(/'/g, "\\'")}')">
                   ☁️ + Upload Video
                 </button>
               </div>
@@ -2919,7 +3179,7 @@
           if (lecs.length === 0) {
             vHtml += `<div style="text-align:center; padding:18px; color:#64748B; background:#F8FAFC; border-radius:8px; border:1px dashed #CBD5E1; margin:4px 0;">
               <p style="font-size:13px; font-weight:700; color:#334155; margin-bottom:8px;">No videos uploaded in "${sec.title}" yet.</p>
-              <button type="button" class="btn-primary" style="padding:8px 16px; font-size:12px;" onclick="openBatchVideoUpload('${batchId}', '${sec.id || sec._id}')">
+              <button type="button" class="btn-primary" style="padding:8px 16px; font-size:12px;" onclick="openDedicatedBatchUpload('${batchId}', '${sec.id || sec._id}', '${sec.title.replace(/'/g, "\\'")}')">
                 ☁️ + Upload Video to this Section
               </button>
             </div>`;
